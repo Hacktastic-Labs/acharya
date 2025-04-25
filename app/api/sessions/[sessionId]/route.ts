@@ -1,7 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db"; // Assuming @/ is configured for your src directory
 import { sessions, generated_content } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, inArray, sql } from "drizzle-orm";
+import { list, del } from "@vercel/blob";
+
+// Helper function to safely parse JSON content
+// It might be better to move this to a shared utils file
+const safeJsonParse = (str: any) => {
+  if (typeof str !== "string") return str; // Already an object or not a string
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    console.error("Failed to parse JSON content:", str, e);
+    return null; // Or return the original string, depending on desired handling
+  }
+};
 
 export async function GET(
   request: NextRequest,
@@ -44,9 +57,136 @@ export async function GET(
     }
 
     // Fetch related generated content separately
-    const relatedContent = await db.query.generated_content.findMany({
+    const initialRelatedContent = await db.query.generated_content.findMany({
       where: eq(generated_content.sessionId, sessionId),
     });
+
+    // Initialize relatedContent with the initial fetch
+    let relatedContent = initialRelatedContent;
+
+    // --- Start: Vercel Blob Listing Logic ---
+    let audioBlobs = [];
+    try {
+      const blobPrefix = `monologues/${sessionId}/`;
+      const listResult = await list({
+        prefix: blobPrefix,
+      });
+      audioBlobs = listResult.blobs;
+      console.log(
+        `Found ${audioBlobs.length} blobs for prefix ${blobPrefix}:`,
+        audioBlobs.map((b) => b.pathname)
+      );
+
+      // --- Start DB Sync Logic ---
+      const monologueType = "monologue"; // Or podcast, adjust as needed
+
+      // Filter initial content to only get relevant type (monologues)
+      const existingMonologues = initialRelatedContent.filter(
+        (item) => item.type === monologueType
+      );
+
+      // Create a map for quick lookup: pathname -> record
+      const existingMonologuesMap = new Map<
+        string,
+        typeof generated_content.$inferSelect
+      >();
+      existingMonologues.forEach((item) => {
+        const content = safeJsonParse(item.content);
+        // Use pathname stored in content, if available
+        if (content?.pathname && typeof content.pathname === "string") {
+          existingMonologuesMap.set(content.pathname, item);
+        } else {
+          // Fallback or logging if pathname isn't stored correctly
+          console.warn(
+            `Monologue record ID ${item.id} missing valid pathname in content.`
+          );
+        }
+      });
+
+      const updatesToMake: { id: number; content: any }[] = [];
+      const insertsToMake: (typeof generated_content.$inferInsert)[] = [];
+
+      for (const blob of audioBlobs) {
+        const existingRecord = existingMonologuesMap.get(blob.pathname);
+        const newContent = { audioUrl: blob.url, pathname: blob.pathname };
+
+        if (existingRecord) {
+          // Blob exists in DB, check if update needed
+          const existingContent = safeJsonParse(existingRecord.content);
+          if (existingContent?.audioUrl !== blob.url) {
+            updatesToMake.push({ id: existingRecord.id, content: newContent });
+          }
+          // Remove from map, indicating it's been processed and should NOT be deleted
+          existingMonologuesMap.delete(blob.pathname);
+        } else {
+          // Blob not in DB, needs insert
+          insertsToMake.push({
+            sessionId: sessionId,
+            userId: session.userId, // Assuming session fetch was successful
+            type: monologueType,
+            content: newContent,
+          });
+        }
+      }
+
+      // Records remaining in the map are in DB but not in Blob storage anymore
+      const idsToDelete = Array.from(existingMonologuesMap.values()).map(
+        (item) => item.id
+      );
+
+      // Perform DB operations (consider wrapping in a transaction if your DB driver supports it)
+      let syncError = null;
+      try {
+        if (insertsToMake.length > 0) {
+          console.log(
+            `Inserting ${insertsToMake.length} new monologue records.`
+          );
+          await db.insert(generated_content).values(insertsToMake);
+        }
+        if (updatesToMake.length > 0) {
+          console.log(`Updating ${updatesToMake.length} monologue records.`);
+          // Drizzle requires updates one by one or complex SQL
+          for (const update of updatesToMake) {
+            await db
+              .update(generated_content)
+              .set({ content: update.content })
+              .where(eq(generated_content.id, update.id));
+          }
+        }
+        if (idsToDelete.length > 0) {
+          console.log(
+            `Deleting ${idsToDelete.length} stale monologue records.`
+          );
+          // Also delete the corresponding blobs from storage
+          const pathnamesToDelete = Array.from(existingMonologuesMap.keys());
+          if (pathnamesToDelete.length > 0) {
+            console.log(
+              `Deleting ${pathnamesToDelete.length} blobs from storage.`
+            );
+            await del(pathnamesToDelete); // Assuming del accepts an array of pathnames
+          }
+          await db
+            .delete(generated_content)
+            .where(inArray(generated_content.id, idsToDelete));
+        }
+      } catch (dbError) {
+        console.error("Error during DB sync operations:", dbError);
+        syncError = dbError; // Store error to potentially return
+      }
+
+      // Refetch content *after* sync if any changes were made
+      relatedContent = await db.query.generated_content.findMany({
+        where: eq(generated_content.sessionId, sessionId),
+      });
+
+      // --- End DB Sync Logic ---
+    } catch (blobError) {
+      console.error("Error listing blobs:", blobError);
+      // Decide how to handle blob listing errors. Maybe return the session data anyway?
+      // For now, we continue but log the error.
+      // No need to reassign here, relatedContent already holds initialRelatedContent
+    }
+    // --- End: Vercel Blob Listing Logic ---
 
     // Debug: Log what we found
     console.log(`Session ${sessionId} found:`, session);
