@@ -5,10 +5,9 @@ import { eq } from "drizzle-orm";
 
 export async function GET(
   request: NextRequest,
-  context: { params: { sessionId: string } }
+  { params }: { params: { sessionId: string } }
 ) {
   // Await the params to avoid the dynamic API error
-  const params = await context.params;
   const sessionIdString = params.sessionId;
 
   if (!sessionIdString) {
@@ -85,9 +84,8 @@ export async function GET(
 // TEST ENDPOINT: Add sample content to a session
 export async function PUT(
   request: NextRequest,
-  context: { params: { sessionId: string } }
+  { params }: { params: { sessionId: string } }
 ) {
-  const params = await context.params;
   const sessionIdString = params.sessionId;
 
   if (!sessionIdString) {
