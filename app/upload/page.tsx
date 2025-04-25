@@ -24,6 +24,7 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable";
 import { InteractiveFlashcards } from "@/components/interactive-flashcards";
+import { EnhancedChat } from "@/components/enhanced-chat";
 
 // Icons
 import {
@@ -39,6 +40,7 @@ import {
   PanelLeft,
   PanelRight,
   Bot,
+  Brain,
 } from "lucide-react";
 
 // Server Actions & Types
@@ -82,7 +84,7 @@ function SubmitButton({ text = "Submit", pendingText = "Processing..." }) {
 // --- Helper Component for Displaying Results ---
 function ResultsDisplay({ resultState }: { resultState: ActionResult | null }) {
   const [activeTab, setActiveTab] = useState<
-    "flashcards" | "summary" | "monologue"
+    "flashcards" | "summary" | "monologue" | "chat"
   >("flashcards");
   const [isPlaying, setIsPlaying] = useState(false);
   const [enhancedSummary, setEnhancedSummary] = useState<string | null>(null);
@@ -94,7 +96,8 @@ function ResultsDisplay({ resultState }: { resultState: ActionResult | null }) {
         resultState.flashcardsText ? "flashcards" : null,
         resultState.summaryText ? "summary" : null,
         resultState.monologueText ? "monologue" : null,
-      ].filter(Boolean) as ("flashcards" | "summary" | "monologue")[])
+        resultState.summaryText && resultState.sessionId ? "chat" : null,
+      ].filter(Boolean) as ("flashcards" | "summary" | "monologue" | "chat")[])
     : [];
 
   // Set active tab to the first available if current is not available
@@ -273,6 +276,19 @@ function ResultsDisplay({ resultState }: { resultState: ActionResult | null }) {
                       Monologue
                     </button>
                   )}
+                  {resultState.summaryText && resultState.sessionId && (
+                    <button
+                      onClick={() => setActiveTab("chat")}
+                      className={`px-4 py-2 font-medium text-sm rounded-t-md transition-colors ${
+                        activeTab === "chat"
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-muted"
+                      }`}
+                    >
+                      <Brain className="inline-block mr-2 h-4 w-4" />
+                      Chat
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -397,6 +413,12 @@ function ResultsDisplay({ resultState }: { resultState: ActionResult | null }) {
                       {resultState.monologueText}
                     </pre>
                   </div>
+                </div>
+              )}
+
+              {activeTab === "chat" && resultState.summaryText && resultState.sessionId && (
+                <div className="bg-background rounded-md border shadow-sm">
+                  <EnhancedChat documentContext={resultState.summaryText} documentId={resultState.sessionId} />
                 </div>
               )}
             </div>
