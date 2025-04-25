@@ -119,16 +119,23 @@ async function generateConversationAudio(
 
     const deepgram = createClient(deepgramApiKey);
 
-    // Create a unique filename for this conversation
+    // Create a unique filename with timestamp and random string for uniqueness
     const timestamp = new Date().getTime();
-    const outputDir = path.join(process.cwd(), "public", "audio");
-    const outputFileName = `conversation-${timestamp}.mp3`;
+    const randomString = Math.random().toString(36).substring(7);
+    const outputFileName = `conversation-${timestamp}-${randomString}.mp3`;
+    // In Vercel, we'll store files in /tmp
+    const outputDir = path.join("/tmp");
     const outputPath = path.join(outputDir, outputFileName);
-    const publicPath = `/audio/${outputFileName}`;
+    // The public path will be served through our API
+    const publicPath = `/api/audio/${outputFileName}`;
 
     // Ensure the directory exists
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
+    try {
+      await fs.promises.mkdir(outputDir, { recursive: true });
+      console.log("Verified temp directory exists");
+    } catch (error) {
+      console.error("Error creating directory:", error);
+      throw new Error("Failed to create temp directory");
     }
 
     const response = await deepgram.speak.request(
@@ -147,21 +154,32 @@ async function generateConversationAudio(
       const reader = stream.getReader();
 
       let done = false;
+      let bytesRead = 0;
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
         if (value) {
           chunks.push(value);
+          bytesRead += value.length;
         }
       }
 
+      console.log(`Read ${bytesRead} bytes from stream`);
+
       // Create a readable stream from the chunks
-      const nodeStream = Readable.from(Buffer.concat(chunks));
+      const buffer = Buffer.concat(chunks);
+      const nodeStream = Readable.from(buffer);
 
       // Pipe to file using Node.js streams
       await pipeline(nodeStream, file);
 
       console.log(`Audio file written to ${outputPath}`);
+
+      // Double check file exists
+      const fileExists = fs.existsSync(outputPath);
+      const fileSize = fileExists ? fs.statSync(outputPath).size : 0;
+      console.log(`File exists: ${fileExists}, Size: ${fileSize} bytes`);
+
       return publicPath;
     } else {
       console.error("Error generating audio: No stream returned");
