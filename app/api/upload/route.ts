@@ -13,7 +13,10 @@ export async function POST(req: NextRequest) {
 
   // Only allow PDFs
   if (file.type !== "application/pdf") {
-    return NextResponse.json({ error: "Only PDF files are allowed" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Only PDF files are allowed" },
+      { status: 400 }
+    );
   }
 
   // Upload to Vercel Blob
@@ -22,4 +25,4 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({ url: blob.url });
-} 
+}
