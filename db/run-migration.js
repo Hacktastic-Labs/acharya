@@ -15,9 +15,18 @@ async function runMigration() {
   });
 
   try {
-    const migrationFile = await fs.readFile(path.join(__dirname, 'migrations', '0000_initial.sql'), 'utf8');
-    await connection.query(migrationFile);
-    console.log('Migration completed successfully');
+    const migrationDir = path.join(__dirname, 'migrations');
+    const files = (await fs.readdir(migrationDir)).filter(f => f.endsWith('.sql'));
+    for (const file of files) {
+      const sql = await fs.readFile(path.join(migrationDir, file), 'utf8');
+      // Split by semicolon, filter out empty statements
+      const statements = sql.split(';').map(s => s.trim()).filter(Boolean);
+      for (const statement of statements) {
+        await connection.query(statement);
+      }
+      console.log('Ran migration:', file);
+    }
+    console.log('All migrations completed successfully');
   } catch (error) {
     console.error('Error running migration:', error);
   } finally {

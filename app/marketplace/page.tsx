@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Plus, FileText, BookOpen, X } from "lucide-react";
@@ -8,33 +8,6 @@ import { AptosWalletConnect } from "@/components/aptos-wallet-connect";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { KeylessProvider, useKeyless } from "@/components/aptos-keyless-context";
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
-
-const sampleListings = [
-  {
-    id: 1,
-    title: "Calculus Chapter 1 Notes",
-    description: "Comprehensive notes covering limits, derivatives, and continuity.",
-    price: 2.5,
-    category: "Notes",
-    uploader: "Aditi Sharma",
-  },
-  {
-    id: 2,
-    title: "Physics Formula Sheet",
-    description: "All key formulas for Class 12 Physics in one place.",
-    price: 0,
-    category: "Formula Sheet",
-    uploader: "Rahul Verma",
-  },
-  {
-    id: 3,
-    title: "Organic Chemistry Mindmap",
-    description: "Visual mindmap for quick revision before exams.",
-    price: 0.002,
-    category: "Mindmap",
-    uploader: "Priya Singh",
-  },
-];
 
 function GoogleSignInButton() {
   const { keylessAccount, signInWithGoogle, signOut, loading, address } = useKeyless();
@@ -70,7 +43,7 @@ function WalletStatus() {
   return null;
 }
 
-function CreateListingModal({ open, onClose, disabled }: { open: boolean; onClose: () => void; disabled?: boolean }) {
+function CreateListingModal({ open, onClose, disabled, onSubmit }: { open: boolean; onClose: () => void; disabled?: boolean; onSubmit?: (e: any) => void }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -86,7 +59,7 @@ function CreateListingModal({ open, onClose, disabled }: { open: boolean; onClos
           <Plus className="h-6 w-6 text-primary" /> Create Listing
         </h2>
         <p className="text-muted-foreground mb-4">Share your notes or study materials with the community.</p>
-        <form className="space-y-4" onSubmit={e => { e.preventDefault(); onClose(); }}>
+        <form className="space-y-4" onSubmit={onSubmit}>
           <div>
             <label className="block text-sm font-medium mb-1" htmlFor="listing-title">Title</label>
             <input id="listing-title" name="title" type="text" className="w-full rounded border px-3 py-2" placeholder="e.g. Calculus Chapter 1 Notes" required disabled={disabled} />
@@ -113,7 +86,7 @@ function CreateListingModal({ open, onClose, disabled }: { open: boolean; onClos
             <input id="listing-price" name="price" type="number" min="0" step="0.01" className="w-full rounded border px-3 py-2" placeholder="Free or set your price" required disabled={disabled} />
           </div>
           <Button type="submit" className="w-full" variant="default" disabled={disabled}>
-            {disabled ? "Connect Wallet to Create Listing" : "Create Listing (Demo Only)"}
+            {disabled ? "Connect Wallet to Create Listing" : "Create Listing"}
           </Button>
         </form>
       </div>
@@ -137,7 +110,7 @@ function ListingDetailModal({ open, onClose, listing, onBuy, buying }: { open: b
           <FileText className="h-6 w-6 text-primary" /> {listing.title}
         </h2>
         <div className="mb-2 text-muted-foreground text-sm">Category: {listing.category}</div>
-        <div className="mb-2 text-muted-foreground text-sm">Uploaded by: {listing.uploader}</div>
+        <div className="mb-2 text-muted-foreground text-sm">Uploaded by: {shortAddress(listing.uploader)}</div>
         <div className="mb-4 text-base">{listing.description}</div>
         <div className="mb-4 flex items-center gap-2">
           <span className="font-semibold text-primary text-lg">
@@ -152,13 +125,38 @@ function ListingDetailModal({ open, onClose, listing, onBuy, buying }: { open: b
   );
 }
 
+// Utility to shorten wallet address
+function shortAddress(addr: string) {
+  if (!addr) return "";
+  if (addr.startsWith("0x") && addr.length > 6) return addr.slice(0, 4) + "..";
+  if (addr.length > 6) return addr.slice(0, 2) + "..";
+  return addr;
+}
+
 function MarketplaceContent() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedListing, setSelectedListing] = useState<any>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [buying, setBuying] = useState(false);
+  const [listings, setListings] = useState<any[]>([]);
+  const [purchases, setPurchases] = useState<any[]>([]);
   const { connected, account, signAndSubmitTransaction } = useWallet();
   const { keylessAccount } = useKeyless();
+
+  useEffect(() => {
+    fetch("/api/marketplace")
+      .then(res => res.json())
+      .then(data => setListings(data.listings || []));
+  }, []);
+
+  useEffect(() => {
+    const address = account?.address?.toString() || keylessAccount?.accountAddress;
+    if (address) {
+      fetch(`/api/purchase?address=${address}`)
+        .then(res => res.json())
+        .then(data => setPurchases(data.purchases || []));
+    }
+  }, [account, keylessAccount]);
 
   function handleViewBuy(listing: any) {
     setSelectedListing(listing);
@@ -168,12 +166,11 @@ function MarketplaceContent() {
   async function handleBuy() {
     if (!selectedListing) return;
     setBuying(true);
-    // Use a valid Aptos testnet address for demo (replace with real uploader address in production)
     const recipient = "0x1ecb02aa080e4eaf696222c19f12d4d4e486308043c874d0ff69b2142b0d0541";
     const amount = selectedListing.price;
+    const address = account?.address?.toString() || keylessAccount?.accountAddress;
     try {
       if (connected && account) {
-        // Wallet adapter transaction (correct format)
         const response = await signAndSubmitTransaction({
           sender: account.address,
           data: {
@@ -195,11 +192,66 @@ function MarketplaceContent() {
       } else {
         alert("Not connected. Connect your wallet or sign in with Google.");
       }
+      // Record purchase in DB
+      if (address) {
+        await fetch("/api/purchase", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            address,
+            listing_id: selectedListing.id,
+          }),
+        });
+        // Refresh purchases
+        fetch(`/api/purchase?address=${address}`)
+          .then(res => res.json())
+          .then(data => setPurchases(data.purchases || []));
+      }
       setDetailOpen(false);
     } catch (err: any) {
       alert("Transaction failed: " + (err.message || String(err)));
     } finally {
       setBuying(false);
+    }
+  }
+
+  async function handleCreateListing(e: any) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    const title = formData.get("title");
+    const description = formData.get("description");
+    const category = formData.get("category");
+    const price = formData.get("price");
+    const file = formData.get("file") as File | null;
+
+    let fileUrl = null;
+    if (file && file.size > 0) {
+      // Upload to /api/upload
+      const uploadForm = new FormData();
+      uploadForm.append("file", file);
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadForm,
+      });
+      const uploadData = await uploadRes.json();
+      fileUrl = uploadData.url;
+    }
+
+    const uploader = account?.address?.toString() || keylessAccount?.accountAddress || "Anonymous";
+    const res = await fetch("/api/marketplace", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, description, category, price, uploader, fileUrl }),
+    });
+    if (res.ok) {
+      setModalOpen(false);
+      // Refresh listings
+      fetch("/api/marketplace")
+        .then(res => res.json())
+        .then(data => setListings(data.listings || []));
+    } else {
+      alert("Failed to create listing");
     }
   }
 
@@ -225,23 +277,60 @@ function MarketplaceContent() {
           </div>
         </div>
 
+        {/* My Purchases Section */}
+        {(account?.address || keylessAccount?.accountAddress) && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">My Purchases</h2>
+            {purchases.length === 0 ? (
+              <p className="text-muted-foreground">You haven't bought anything yet.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {purchases.map(listing => (
+                  <Card key={listing.id} className="flex flex-col h-full">
+                    <CardHeader>
+                      <div className="flex items-center gap-2 mb-1">
+                        <FileText className="h-5 w-5 text-primary" />
+                        <CardTitle>{listing.title}</CardTitle>
+                      </div>
+                      <CardDescription>{listing.category} • Uploaded by {shortAddress(listing.uploader)}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-1">
+                      <p className="text-muted-foreground mb-2">{listing.description}</p>
+                    </CardContent>
+                    <CardFooter className="flex items-center justify-between">
+                      <span className="font-semibold text-primary">
+                        {listing.price === "0" ? "Free" : `${listing.price} APT`}
+                      </span>
+                      {listing.file_url && (
+                        <Button asChild size="sm" variant="outline">
+                          <a href={listing.file_url} target="_blank" rel="noopener noreferrer">View PDF</a>
+                        </Button>
+                      )}
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Listings Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {sampleListings.map(listing => (
+          {listings.map(listing => (
             <Card key={listing.id} className="flex flex-col h-full">
               <CardHeader>
                 <div className="flex items-center gap-2 mb-1">
                   <FileText className="h-5 w-5 text-primary" />
                   <CardTitle>{listing.title}</CardTitle>
                 </div>
-                <CardDescription>{listing.category} • Uploaded by {listing.uploader}</CardDescription>
+                <CardDescription>{listing.category} • Uploaded by {shortAddress(listing.uploader)}</CardDescription>
               </CardHeader>
               <CardContent className="flex-1">
                 <p className="text-muted-foreground mb-2">{listing.description}</p>
               </CardContent>
               <CardFooter className="flex items-center justify-between">
                 <span className="font-semibold text-primary">
-                  {listing.price === 0 ? "Free" : `${listing.price} APT`}
+                  {listing.price === "0" ? "Free" : `${listing.price} APT`}
                 </span>
                 <Button size="sm" variant="secondary" disabled={!connected && !keylessAccount} onClick={() => handleViewBuy(listing)}>
                   View / Buy
@@ -251,7 +340,7 @@ function MarketplaceContent() {
           ))}
         </div>
       </div>
-      <CreateListingModal open={modalOpen} onClose={() => setModalOpen(false)} disabled={!connected && !keylessAccount} />
+      <CreateListingModal open={modalOpen} onClose={() => setModalOpen(false)} disabled={!connected && !keylessAccount} onSubmit={handleCreateListing} />
       <ListingDetailModal open={detailOpen} onClose={() => setDetailOpen(false)} listing={selectedListing} onBuy={handleBuy} buying={buying} />
     </div>
   );
