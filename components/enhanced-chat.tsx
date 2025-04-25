@@ -26,12 +26,14 @@ interface EnhancedChatProps {
   documentContext?: string;
   className?: string;
   initialMessage?: string;
+  documentId?: string;
 }
 
 export function EnhancedChat({
   documentContext = "",
   className = "",
   initialMessage = "Hello! I'm your AI learning assistant. I've analyzed your documents and I'm ready to help you learn. What would you like to know?",
+  documentId,
 }: EnhancedChatProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -75,6 +77,7 @@ export function EnhancedChat({
           message: input.trim(),
           context: documentContext,
           history: messages,
+          documentId: documentId,
         }),
       });
 
