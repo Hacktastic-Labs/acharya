@@ -8,10 +8,5 @@ export default {
   dialect: "mysql",
   dbCredentials: {
     url: process.env.DATABASE_URL!,
-    ssl: {
-      // ca: fs.readFileSync(path.resolve(__dirname, "../certs/ca.crt")), // Adjust the path based on your file structure
-      // rejectUnauthorized: true,
-      rejectUnauthorized: false,
-    },
   },
 } satisfies Config;
