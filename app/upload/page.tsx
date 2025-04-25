@@ -87,6 +87,41 @@ function ResultsDisplay({ resultState }: { resultState: ActionResult | null }) {
   >("flashcards");
   const [isPlaying, setIsPlaying] = useState(false);
   const [enhancedSummary, setEnhancedSummary] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Add cleanup effect
+  useEffect(() => {
+    if (!resultState?.audioFilePath) return;
+
+    // Extract filename from the audio path
+    const filename = resultState.audioFilePath.split("/audio/")[1];
+    if (!filename) return;
+
+    // Function to notify the server to clean up the file
+    const cleanupAudio = async () => {
+      try {
+        await fetch(`/api/audio/${filename}/cleanup`, {
+          method: "DELETE",
+        });
+      } catch (error) {
+        console.error("Error cleaning up audio file:", error);
+      }
+    };
+
+    // Add event listener for when the user leaves the page
+    const handleUnload = () => {
+      // Using sendBeacon for more reliable cleanup during page unload
+      navigator.sendBeacon(`/api/audio/${filename}/cleanup`);
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+
+    // Cleanup function
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+      cleanupAudio();
+    };
+  }, [resultState?.audioFilePath]);
 
   // Determine which tabs are available - moved outside conditional
   const availableTabs = resultState
@@ -316,13 +351,12 @@ function ResultsDisplay({ resultState }: { resultState: ActionResult | null }) {
                           size="icon"
                           variant="outline"
                           onClick={() => {
-                            const audio = document.querySelector("audio");
-                            if (audio) {
-                              if (audio.paused) {
-                                audio.play();
+                            if (audioRef.current) {
+                              if (audioRef.current.paused) {
+                                audioRef.current.play();
                                 setIsPlaying(true);
                               } else {
-                                audio.pause();
+                                audioRef.current.pause();
                                 setIsPlaying(false);
                               }
                             }
@@ -337,6 +371,7 @@ function ResultsDisplay({ resultState }: { resultState: ActionResult | null }) {
                         </Button>
                         <div className="flex-1">
                           <audio
+                            ref={audioRef}
                             src={resultState.audioFilePath}
                             onEnded={() => setIsPlaying(false)}
                             onPause={() => setIsPlaying(false)}
