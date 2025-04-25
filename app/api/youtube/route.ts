@@ -43,14 +43,16 @@ export async function POST(request: NextRequest) {
     const [newContent] = await db
       .insert(generated_content)
       .values({
+        userId,
         sessionId,
+        type: "youtube",
         content: {
           summary,
           flashcards,
           podcast,
         },
       })
-      .returning();
+      .$returningId();
 
     return NextResponse.json({
       success: true,
@@ -67,4 +69,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

@@ -120,9 +120,6 @@ export default function SessionDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [addingContent, setAddingContent] = useState(false);
-  const [regeneratingAudio, setRegeneratingAudio] = useState<number | null>(
-    null
-  );
 
   useEffect(() => {
     if (!sessionId) {
@@ -156,51 +153,6 @@ export default function SessionDetailPage() {
 
     fetchSessionDetails();
   }, [sessionId]);
-
-  // Function to regenerate audio for a content item
-  const regenerateAudio = async (contentId: number, contentType: string) => {
-    if (!sessionId) return;
-
-    try {
-      setRegeneratingAudio(contentId);
-      const response = await fetch(
-        `/api/sessions/${sessionId}/regenerate-audio`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contentId,
-            contentType,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.error || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      // Get the successful response
-      const result = await response.json();
-
-      // Fetch updated session data
-      const updatedSessionResponse = await fetch(`/api/sessions/${sessionId}`);
-      const updatedSession = await updatedSessionResponse.json();
-      setSessionData(updatedSession);
-    } catch (err) {
-      console.error("Error regenerating audio:", err);
-      alert(
-        "Failed to regenerate audio: " +
-          (err instanceof Error ? err.message : "Unknown error")
-      );
-    } finally {
-      setRegeneratingAudio(null);
-    }
-  };
 
   // Add this new function to add sample content
   const addSampleContent = async () => {
@@ -313,47 +265,16 @@ export default function SessionDetailPage() {
             </audio>
             <div className="mt-2 text-sm text-gray-600">
               Audio URL: {audioPath}
-              <button
-                onClick={() =>
-                  regenerateAudio(contentItem.id, contentItem.type)
-                }
-                disabled={regeneratingAudio === contentItem.id}
-                className="ml-4 text-sm text-blue-600 hover:underline flex items-center"
-              >
-                {regeneratingAudio === contentItem.id ? (
-                  <>
-                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                    Regenerating...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="mr-1 h-3 w-3" />
-                    Regenerate Audio
-                  </>
-                )}
-              </button>
+              <div className="ml-4 text-sm text-amber-600">
+                Note: Audio regeneration is no longer available
+              </div>
             </div>
           </div>
         ) : (
           <div className="flex items-center mt-2">
-            <span className="text-amber-700 mr-2">No audio available</span>
-            <button
-              onClick={() => regenerateAudio(contentItem.id, contentItem.type)}
-              disabled={regeneratingAudio === contentItem.id}
-              className="text-sm text-blue-600 hover:underline flex items-center"
-            >
-              {regeneratingAudio === contentItem.id ? (
-                <>
-                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Volume2 className="mr-1 h-3 w-3" />
-                  Generate Audio
-                </>
-              )}
-            </button>
+            <span className="text-amber-700">
+              Audio generation is no longer available
+            </span>
           </div>
         )}
       </div>

@@ -1,18 +1,32 @@
-import { DashboardHeader } from "@/components/dashboard-header"
-import { DashboardShell } from "@/components/dashboard-shell"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Download, Share2, BookOpen } from "lucide-react"
+import { DashboardHeader } from "@/components/dashboard-header";
+import { DashboardShell } from "@/components/dashboard-shell";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Download, Share2, BookOpen } from "lucide-react";
 
-export default function SummaryPage({ params }: { params: { id: string } }) {
+export default function SummaryPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   return (
     <div className="flex min-h-screen flex-col">
       <DashboardHeader />
       <DashboardShell>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Introduction to Neural Networks</h2>
-            <p className="text-muted-foreground">Generated from PDF • 3 days ago</p>
+            <h2 className="text-3xl font-bold tracking-tight">
+              Introduction to Neural Networks
+            </h2>
+            <p className="text-muted-foreground">
+              Generated from PDF • 3 days ago
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm">
@@ -37,11 +51,26 @@ export default function SummaryPage({ params }: { params: { id: string } }) {
           </CardHeader>
           <CardContent>
             <ul className="list-disc list-inside space-y-2">
-              <li>Neural networks are computational models inspired by the human brain's structure and function.</li>
-              <li>They consist of interconnected nodes (neurons) organized in layers that process information.</li>
-              <li>Deep learning is a subset of neural networks with multiple hidden layers.</li>
-              <li>Neural networks excel at pattern recognition, classification, and prediction tasks.</li>
-              <li>Training involves adjusting weights through backpropagation to minimize error.</li>
+              <li>
+                Neural networks are computational models inspired by the human
+                brain's structure and function.
+              </li>
+              <li>
+                They consist of interconnected nodes (neurons) organized in
+                layers that process information.
+              </li>
+              <li>
+                Deep learning is a subset of neural networks with multiple
+                hidden layers.
+              </li>
+              <li>
+                Neural networks excel at pattern recognition, classification,
+                and prediction tasks.
+              </li>
+              <li>
+                Training involves adjusting weights through backpropagation to
+                minimize error.
+              </li>
             </ul>
           </CardContent>
         </Card>
@@ -49,79 +78,100 @@ export default function SummaryPage({ params }: { params: { id: string } }) {
         <Card>
           <CardHeader>
             <CardTitle>Detailed Summary</CardTitle>
-            <CardDescription>Comprehensive overview of the document</CardDescription>
+            <CardDescription>
+              Comprehensive overview of the document
+            </CardDescription>
           </CardHeader>
           <CardContent className="prose dark:prose-invert max-w-none">
             <h3>Introduction</h3>
             <p>
-              Neural networks represent a fundamental paradigm shift in computing, moving away from traditional
-              algorithmic approaches toward systems that can learn from data. Inspired by the biological neural networks
-              in the human brain, artificial neural networks (ANNs) have become the backbone of modern artificial
+              Neural networks represent a fundamental paradigm shift in
+              computing, moving away from traditional algorithmic approaches
+              toward systems that can learn from data. Inspired by the
+              biological neural networks in the human brain, artificial neural
+              networks (ANNs) have become the backbone of modern artificial
               intelligence and machine learning applications.
             </p>
 
             <h3>Structure and Components</h3>
             <p>
-              At their core, neural networks consist of layers of interconnected nodes or "neurons." A typical neural
-              network architecture includes:
+              At their core, neural networks consist of layers of interconnected
+              nodes or "neurons." A typical neural network architecture
+              includes:
             </p>
             <ul>
               <li>
-                <strong>Input Layer:</strong> Receives the initial data or features
+                <strong>Input Layer:</strong> Receives the initial data or
+                features
               </li>
               <li>
-                <strong>Hidden Layers:</strong> Process the information through weighted connections
+                <strong>Hidden Layers:</strong> Process the information through
+                weighted connections
               </li>
               <li>
-                <strong>Output Layer:</strong> Produces the final prediction or classification
+                <strong>Output Layer:</strong> Produces the final prediction or
+                classification
               </li>
             </ul>
             <p>
-              Each neuron applies an activation function to the weighted sum of its inputs, introducing non-linearity
-              that allows the network to learn complex patterns.
+              Each neuron applies an activation function to the weighted sum of
+              its inputs, introducing non-linearity that allows the network to
+              learn complex patterns.
             </p>
 
             <h3>Training Process</h3>
-            <p>Neural networks learn through a process called training, which involves:</p>
+            <p>
+              Neural networks learn through a process called training, which
+              involves:
+            </p>
             <ol>
               <li>
-                <strong>Forward Propagation:</strong> Data passes through the network to generate predictions
+                <strong>Forward Propagation:</strong> Data passes through the
+                network to generate predictions
               </li>
               <li>
-                <strong>Error Calculation:</strong> The difference between predictions and actual values is measured
+                <strong>Error Calculation:</strong> The difference between
+                predictions and actual values is measured
               </li>
               <li>
-                <strong>Backpropagation:</strong> The error is propagated backward to adjust connection weights
+                <strong>Backpropagation:</strong> The error is propagated
+                backward to adjust connection weights
               </li>
               <li>
-                <strong>Optimization:</strong> Weights are updated using algorithms like gradient descent
+                <strong>Optimization:</strong> Weights are updated using
+                algorithms like gradient descent
               </li>
             </ol>
             <p>
-              This iterative process continues until the network achieves satisfactory performance on the training data.
+              This iterative process continues until the network achieves
+              satisfactory performance on the training data.
             </p>
 
             <h3>Types of Neural Networks</h3>
-            <p>Various neural network architectures have been developed for specific tasks:</p>
+            <p>
+              Various neural network architectures have been developed for
+              specific tasks:
+            </p>
             <ul>
               <li>
-                <strong>Feedforward Neural Networks:</strong> The simplest form where information flows in one direction
+                <strong>Feedforward Neural Networks:</strong> The simplest form
+                where information flows in one direction
               </li>
               <li>
-                <strong>Convolutional Neural Networks (CNNs):</strong> Specialized for image processing and computer
-                vision
+                <strong>Convolutional Neural Networks (CNNs):</strong>{" "}
+                Specialized for image processing and computer vision
               </li>
               <li>
-                <strong>Recurrent Neural Networks (RNNs):</strong> Designed for sequential data like text and time
-                series
+                <strong>Recurrent Neural Networks (RNNs):</strong> Designed for
+                sequential data like text and time series
               </li>
               <li>
-                <strong>Long Short-Term Memory (LSTM):</strong> A type of RNN that addresses the vanishing gradient
-                problem
+                <strong>Long Short-Term Memory (LSTM):</strong> A type of RNN
+                that addresses the vanishing gradient problem
               </li>
               <li>
-                <strong>Generative Adversarial Networks (GANs):</strong> Used for generating new data similar to
-                training data
+                <strong>Generative Adversarial Networks (GANs):</strong> Used
+                for generating new data similar to training data
               </li>
             </ul>
 
@@ -148,14 +198,15 @@ export default function SummaryPage({ params }: { params: { id: string } }) {
 
             <h3>Conclusion</h3>
             <p>
-              Neural networks represent one of the most significant advances in computing of the past few decades. As
-              research continues and computational resources improve, their capabilities and applications will likely
-              expand further, driving innovation across industries and scientific disciplines.
+              Neural networks represent one of the most significant advances in
+              computing of the past few decades. As research continues and
+              computational resources improve, their capabilities and
+              applications will likely expand further, driving innovation across
+              industries and scientific disciplines.
             </p>
           </CardContent>
         </Card>
       </DashboardShell>
     </div>
-  )
+  );
 }
-

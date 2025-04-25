@@ -26,17 +26,20 @@ export async function POST(request: NextRequest) {
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
     // Generate summary
-    const summaryPrompt = "Generate a summary of the following content: [CONTENT]";
+    const summaryPrompt =
+      "Generate a summary of the following content: [CONTENT]";
     const summaryResult = await model.generateContent(summaryPrompt);
     const summary = await summaryResult.response.text();
 
     // Generate flashcards
-    const flashcardsPrompt = "Generate flashcards from the following content: [CONTENT]";
+    const flashcardsPrompt =
+      "Generate flashcards from the following content: [CONTENT]";
     const flashcardsResult = await model.generateContent(flashcardsPrompt);
     const flashcards = await flashcardsResult.response.text();
 
     // Generate podcast script
-    const podcastPrompt = "Generate a podcast script from the following content: [CONTENT]";
+    const podcastPrompt =
+      "Generate a podcast script from the following content: [CONTENT]";
     const podcastResult = await model.generateContent(podcastPrompt);
     const podcast = await podcastResult.response.text();
 
@@ -44,14 +47,16 @@ export async function POST(request: NextRequest) {
     const [newContent] = await db
       .insert(generated_content)
       .values({
+        userId,
         sessionId,
+        type: "generated",
         content: {
           summary,
           flashcards,
           podcast,
         },
       })
-      .returning();
+      .$returningId();
 
     return NextResponse.json({
       success: true,

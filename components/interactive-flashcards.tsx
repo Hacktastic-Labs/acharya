@@ -1,11 +1,22 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, ArrowRight, Shuffle, RotateCcw, Loader2, AlertTriangle } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Shuffle,
+  RotateCcw,
+  Loader2,
+  AlertTriangle,
+} from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { parseFlashcardsFromText, formatFlashcardsWithGemini, Flashcard } from "@/lib/utils/flashcard-formatter";
+import {
+  parseFlashcardsFromText,
+  formatFlashcardsWithGemini,
+  Flashcard,
+} from "@/lib/utils/flashcard-formatter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Helper function to shuffle an array
@@ -22,7 +33,9 @@ interface InteractiveFlashcardsProps {
   flashcardsText: string;
 }
 
-export function InteractiveFlashcards({ flashcardsText }: InteractiveFlashcardsProps) {
+export function InteractiveFlashcards({
+  flashcardsText,
+}: InteractiveFlashcardsProps) {
   const [parsedFlashcards, setParsedFlashcards] = useState<Flashcard[]>([]);
   const [cards, setCards] = useState<Flashcard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -40,7 +53,7 @@ export function InteractiveFlashcards({ flashcardsText }: InteractiveFlashcardsP
         const initialParse = await parseFlashcardsFromText(flashcardsText);
         setParsedFlashcards(initialParse);
         setCards(initialParse);
-        
+
         // If no cards were parsed, we'll try to reformat automatically
         if (initialParse.length === 0 && flashcardsText.trim().length > 0) {
           await handleReformatFlashcards();
@@ -53,7 +66,7 @@ export function InteractiveFlashcards({ flashcardsText }: InteractiveFlashcardsP
         setIsLoading(false);
       }
     }
-    
+
     parseFlashcards();
   }, [flashcardsText]);
 
@@ -63,15 +76,15 @@ export function InteractiveFlashcards({ flashcardsText }: InteractiveFlashcardsP
       setIsLoading(false);
       return;
     }
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Call the server action to format the flashcards
       const formattedContent = await formatFlashcardsWithGemini(flashcardsText);
       setFormattedText(formattedContent);
-      
+
       // Parse the newly formatted content
       const newFlashcards = await parseFlashcardsFromText(formattedContent);
       setParsedFlashcards(newFlashcards);
@@ -115,12 +128,15 @@ export function InteractiveFlashcards({ flashcardsText }: InteractiveFlashcardsP
   if (cards.length === 0) {
     return (
       <div className="text-center p-6 bg-muted/20 rounded-lg border border-dashed border-muted-foreground/30">
-        <p className="text-muted-foreground mb-4">No flashcards found or invalid format.</p>
+        <p className="text-muted-foreground mb-4">
+          No flashcards found or invalid format.
+        </p>
         <Button onClick={handleReformatFlashcards} className="mb-3">
           Reformat with AI
         </Button>
         <p className="text-xs text-muted-foreground">
-          Click the button above to use AI to convert this content into properly formatted flashcards.
+          Click the button above to use AI to convert this content into properly
+          formatted flashcards.
         </p>
       </div>
     );
@@ -179,19 +195,19 @@ export function InteractiveFlashcards({ flashcardsText }: InteractiveFlashcardsP
             )}
           </div>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleShuffle} 
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleShuffle}
               className="h-8 text-xs"
             >
               <Shuffle className="mr-1 h-3 w-3" />
               Shuffle
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleReset} 
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleReset}
               className="h-8 text-xs"
               disabled={!isShuffled}
             >
@@ -210,13 +226,15 @@ export function InteractiveFlashcards({ flashcardsText }: InteractiveFlashcardsP
           onClick={handleFlip}
         >
           <div
-            className={`relative preserve-3d transition-transform duration-500 h-full ${isFlipped ? 'rotate-y-180' : ''}`}
-            style={{ transformStyle: 'preserve-3d' }}
+            className={`relative preserve-3d transition-transform duration-500 h-full ${
+              isFlipped ? "rotate-y-180" : ""
+            }`}
+            style={{ transformStyle: "preserve-3d" }}
           >
             {/* Front of Card (Question) */}
-            <div 
+            <div
               className="absolute inset-0 w-full h-full"
-              style={{ backfaceVisibility: 'hidden' }}
+              style={{ backfaceVisibility: "hidden" }}
             >
               <Card className="w-full h-full shadow-sm hover:shadow transition-shadow border-primary/10">
                 <CardContent className="flex flex-col items-center justify-center h-full p-6 text-center">
@@ -224,11 +242,15 @@ export function InteractiveFlashcards({ flashcardsText }: InteractiveFlashcardsP
                     Question
                   </div>
                   <div className="max-w-md">
-                    <h3 className="text-xl font-bold mb-4">{currentCard.question}</h3>
+                    <h3 className="text-xl font-bold mb-4">
+                      {currentCard.question}
+                    </h3>
                     {!isFlipped && (
                       <div className="absolute bottom-4 left-0 right-0 text-center">
                         <p className="text-sm text-muted-foreground flex items-center justify-center">
-                          <span className="inline-block animate-bounce mr-1">👆</span> 
+                          <span className="inline-block animate-bounce mr-1">
+                            👆
+                          </span>
                           Tap to reveal answer
                         </p>
                       </div>
@@ -237,13 +259,13 @@ export function InteractiveFlashcards({ flashcardsText }: InteractiveFlashcardsP
                 </CardContent>
               </Card>
             </div>
-            
+
             {/* Back of Card (Answer) */}
-            <div 
+            <div
               className="absolute inset-0 w-full h-full"
-              style={{ 
-                backfaceVisibility: 'hidden',
-                transform: 'rotateY(180deg)'
+              style={{
+                backfaceVisibility: "hidden",
+                transform: "rotateY(180deg)",
               }}
             >
               <Card className="w-full h-full shadow-sm hover:shadow transition-shadow border-primary/10">
@@ -263,18 +285,18 @@ export function InteractiveFlashcards({ flashcardsText }: InteractiveFlashcardsP
 
       {/* Navigation buttons - Fixed at bottom */}
       <div className="flex justify-center gap-3 mt-auto">
-        <Button 
+        <Button
           variant={currentIndex === 0 ? "secondary" : "default"}
-          onClick={handlePrevious} 
+          onClick={handlePrevious}
           disabled={currentIndex === 0}
           className="w-32 gap-1"
         >
           <ArrowLeft className="h-4 w-4" />
           Previous
         </Button>
-        <Button 
+        <Button
           variant={currentIndex === totalCards - 1 ? "secondary" : "default"}
-          onClick={handleNext} 
+          onClick={handleNext}
           disabled={currentIndex === totalCards - 1}
           className="w-32 gap-1"
         >

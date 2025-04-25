@@ -1,10 +1,9 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Brain } from "lucide-react"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { UserButton } from '@clerk/nextjs'
+import Link from "next/link";
+import { Brain } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { UserButton } from "@clerk/nextjs";
 
 export function WorkspaceHeader() {
   return (
@@ -17,16 +16,28 @@ export function WorkspaceHeader() {
           </Link>
         </div>
         <nav className="hidden md:flex items-center gap-6">
-          <Link href="/dashboard" className="text-sm font-medium hover:text-primary">
+          <Link
+            href="/dashboard"
+            className="text-sm font-medium hover:text-primary"
+          >
             Dashboard
           </Link>
-          <Link href="/flashcards" className="text-sm font-medium hover:text-primary">
+          <Link
+            href="/flashcards"
+            className="text-sm font-medium hover:text-primary"
+          >
             Flashcards
           </Link>
-          <Link href="/summaries" className="text-sm font-medium hover:text-primary">
+          <Link
+            href="/summaries"
+            className="text-sm font-medium hover:text-primary"
+          >
             Summaries
           </Link>
-          <Link href="/podcasts" className="text-sm font-medium hover:text-primary">
+          <Link
+            href="/podcasts"
+            className="text-sm font-medium hover:text-primary"
+          >
             Podcasts
           </Link>
         </nav>
@@ -36,5 +47,5 @@ export function WorkspaceHeader() {
         </div>
       </div>
     </header>
-  )
+  );
 }

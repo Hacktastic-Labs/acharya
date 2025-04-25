@@ -14,12 +14,12 @@ import { UploadButton } from "@/components/upload-button";
 import { Overview } from "@/components/overview";
 import SessionsList from "@/components/sessions-list";
 
-import { auth } from "@clerk/nextjs/server"
-import { redirect } from "next/navigation"
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
   const session = await auth();
-  
+
   if (!session?.userId) {
     redirect("/sign-in");
   }

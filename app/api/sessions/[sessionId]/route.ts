@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db"; // Assuming @/ is configured for your src directory
-import { sessions, generatedContent } from "@/db/schema";
+import { sessions, generated_content } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function GET(
   request: NextRequest,
-  context: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   // Await the params to avoid the dynamic API error
-  const params = await context.params;
-  const sessionIdString = params.sessionId;
+  const sessionIdString = (await params).sessionId;
 
   if (!sessionIdString) {
     return NextResponse.json(
@@ -45,8 +44,8 @@ export async function GET(
     }
 
     // Fetch related generated content separately
-    const relatedContent = await db.query.generatedContent.findMany({
-      where: eq(generatedContent.sessionId, sessionId),
+    const relatedContent = await db.query.generated_content.findMany({
+      where: eq(generated_content.sessionId, sessionId),
     });
 
     // Debug: Log what we found
@@ -85,10 +84,9 @@ export async function GET(
 // TEST ENDPOINT: Add sample content to a session
 export async function PUT(
   request: NextRequest,
-  context: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
-  const params = await context.params;
-  const sessionIdString = params.sessionId;
+  const sessionIdString = (await params).sessionId;
 
   if (!sessionIdString) {
     return NextResponse.json(
@@ -144,7 +142,7 @@ export async function PUT(
 
     // 3. Insert the sample content
     const insertPromises = sampleContentTypes.map((sample) =>
-      db.insert(generatedContent).values({
+      db.insert(generated_content).values({
         sessionId,
         userId: session.userId,
         type: sample.type,

@@ -1,40 +1,43 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { DashboardHeader } from "@/components/dashboard-header"
-import { DashboardShell } from "@/components/dashboard-shell"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, ArrowRight, Shuffle, RotateCcw } from "lucide-react"
-import { Progress } from "@/components/ui/progress"
+import { useState, useEffect } from "react";
+import { DashboardHeader } from "@/components/dashboard-header";
+import { DashboardShell } from "@/components/dashboard-shell";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft, ArrowRight, Shuffle, RotateCcw } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 // Sample flashcard data (replace with actual data fetching based on params.id)
 const sampleFlashcards = [
   {
     id: 1,
     question: "What is Machine Learning?",
-    answer: "A field of artificial intelligence that uses statistical techniques to give computer systems the ability to 'learn' (e.g., progressively improve performance on a specific task) from data, without being explicitly programmed."
+    answer:
+      "A field of artificial intelligence that uses statistical techniques to give computer systems the ability to 'learn' (e.g., progressively improve performance on a specific task) from data, without being explicitly programmed.",
   },
   {
     id: 2,
     question: "What are the two main types of Supervised Learning?",
-    answer: "Classification and Regression."
+    answer: "Classification and Regression.",
   },
   {
     id: 3,
     question: "What is Unsupervised Learning?",
-    answer: "A type of machine learning where the algorithm learns patterns from untagged data."
+    answer:
+      "A type of machine learning where the algorithm learns patterns from untagged data.",
   },
   {
     id: 4,
     question: "What is a common example of Clustering?",
-    answer: "K-Means Clustering."
+    answer: "K-Means Clustering.",
   },
   {
     id: 5,
     question: "What does 'Overfitting' mean in ML?",
-    answer: "A modeling error that occurs when a function is too closely fit to a limited set of data points. It may therefore fail to predict future observations reliably."
-  }
+    answer:
+      "A modeling error that occurs when a function is too closely fit to a limited set of data points. It may therefore fail to predict future observations reliably.",
+  },
 ];
 
 // Helper function to shuffle an array
@@ -47,7 +50,11 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-export default function FlashcardStudyPage({ params }: { params: { id: string } }) {
+export default function FlashcardStudyPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const [mounted, setMounted] = useState(false);
   const [cards, setCards] = useState(sampleFlashcards);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -114,9 +121,12 @@ export default function FlashcardStudyPage({ params }: { params: { id: string } 
       <DashboardShell>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Machine Learning Basics</h2>
+            <h2 className="text-3xl font-bold tracking-tight">
+              Machine Learning Basics
+            </h2>
             <p className="text-muted-foreground">
-              Studying {totalCards} cards • Card {currentIndex + 1} of {totalCards}
+              Studying {totalCards} cards • Card {currentIndex + 1} of{" "}
+              {totalCards}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -139,14 +149,22 @@ export default function FlashcardStudyPage({ params }: { params: { id: string } 
             onClick={handleFlip}
           >
             <div
-              className={`relative preserve-3d card-flip-container h-[400px] transition-transform duration-700 ${isFlipped ? 'rotate-y-180' : ''}`}
+              className={`relative preserve-3d card-flip-container h-[400px] transition-transform duration-700 ${
+                isFlipped ? "rotate-y-180" : ""
+              }`}
             >
               {/* Front of Card (Question) */}
               <div className="absolute inset-0 w-full h-full backface-hidden">
                 <Card className="w-full h-full flex items-center justify-center p-8 text-center bg-card text-card-foreground">
                   <CardContent className="flex flex-col items-center justify-center h-full w-full">
-                    <h3 className="text-2xl font-bold mb-4">{currentCard.question}</h3>
-                    {!isFlipped && <p className="text-muted-foreground text-sm">Click to reveal answer</p>}
+                    <h3 className="text-2xl font-bold mb-4">
+                      {currentCard.question}
+                    </h3>
+                    {!isFlipped && (
+                      <p className="text-muted-foreground text-sm">
+                        Click to reveal answer
+                      </p>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -163,11 +181,20 @@ export default function FlashcardStudyPage({ params }: { params: { id: string } 
         </div>
 
         <div className="flex justify-center gap-4">
-          <Button variant="outline" size="lg" onClick={handlePrevious} disabled={currentIndex === 0}>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={handlePrevious}
+            disabled={currentIndex === 0}
+          >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Previous
           </Button>
-          <Button size="lg" onClick={handleNext} disabled={currentIndex === totalCards - 1}>
+          <Button
+            size="lg"
+            onClick={handleNext}
+            disabled={currentIndex === totalCards - 1}
+          >
             Next
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>

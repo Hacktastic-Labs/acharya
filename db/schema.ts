@@ -15,8 +15,8 @@ export const sessions = mysqlTable("sessions", {
   userId: varchar("user_id", { length: 255 }).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
 
 export const documents = mysqlTable("documents", {
@@ -30,7 +30,7 @@ export const documents = mysqlTable("documents", {
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
 
-export const generatedContent = mysqlTable("generated_content", {
+export const generated_content = mysqlTable("generated_content", {
   id: int("id").primaryKey().autoincrement(),
   sessionId: int("session_id")
     .notNull()

@@ -27,12 +27,16 @@ async function generateTestAudio(text: string): Promise<string | null> {
 
     const deepgram = createClient(deepgramApiKey);
 
-    // Create a unique filename
+    // Create a unique filename with a timestamp and random string for uniqueness
     const timestamp = new Date().getTime();
-    const outputDir = path.join(process.cwd(), "public", "audio");
-    const outputFileName = `test-${timestamp}.mp3`;
+    const randomString = Math.random().toString(36).substring(7);
+    const outputFileName = `test-${timestamp}-${randomString}.mp3`;
+
+    // In Vercel, we'll store files in /tmp
+    const outputDir = path.join("/tmp");
     const outputPath = path.join(outputDir, outputFileName);
-    const publicPath = `/audio/${outputFileName}`;
+    // The public path will be served through our API
+    const publicPath = `/api/audio/${outputFileName}`;
 
     console.log("Test audio generation parameters:");
     console.log("- API Key exists:", !!deepgramApiKey);
@@ -41,9 +45,12 @@ async function generateTestAudio(text: string): Promise<string | null> {
     console.log("- Output file:", outputFileName);
 
     // Ensure the directory exists
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
-      console.log("Created output directory");
+    try {
+      await fs.promises.mkdir(outputDir, { recursive: true });
+      console.log("Verified temp directory exists");
+    } catch (error) {
+      console.error("Error creating directory:", error);
+      throw new Error("Failed to create temp directory");
     }
 
     console.log("Making Deepgram request...");
@@ -89,6 +96,12 @@ async function generateTestAudio(text: string): Promise<string | null> {
       const fileSize = fileExists ? fs.statSync(outputPath).size : 0;
       console.log(`File exists: ${fileExists}, Size: ${fileSize} bytes`);
 
+      // Store the file path in a Map with timestamp for cleanup
+      audioFiles.set(outputFileName, {
+        path: outputPath,
+        timestamp: Date.now(),
+      });
+
       return publicPath;
     } else {
       console.error("Error generating audio: No stream returned");
@@ -100,8 +113,30 @@ async function generateTestAudio(text: string): Promise<string | null> {
   }
 }
 
+// Store audio file information for cleanup
+const audioFiles = new Map<string, { path: string; timestamp: number }>();
+
+// Cleanup function to remove old files (older than 1 hour)
+function cleanupOldFiles() {
+  const oneHourAgo = Date.now() - 3600000; // 1 hour in milliseconds
+  for (const [filename, fileInfo] of audioFiles.entries()) {
+    if (fileInfo.timestamp < oneHourAgo) {
+      try {
+        fs.unlinkSync(fileInfo.path);
+        audioFiles.delete(filename);
+        console.log(`Cleaned up old audio file: ${filename}`);
+      } catch (error) {
+        console.error(`Error cleaning up file ${filename}:`, error);
+      }
+    }
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
+    // Clean up old files before processing new request
+    cleanupOldFiles();
+
     // Get body data
     const { text } = await request.json();
 
@@ -139,5 +174,31 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
+  }
+}
+
+// Add a GET route to serve the audio files
+export async function GET(request: NextRequest) {
+  try {
+    const filename = request.url.split("/audio/")[1];
+    if (!filename) {
+      return new NextResponse("File not found", { status: 404 });
+    }
+
+    const filePath = path.join("/tmp", filename);
+    if (!fs.existsSync(filePath)) {
+      return new NextResponse("File not found", { status: 404 });
+    }
+
+    const fileBuffer = await fs.promises.readFile(filePath);
+    return new NextResponse(fileBuffer, {
+      headers: {
+        "Content-Type": "audio/mpeg",
+        "Content-Disposition": `inline; filename="${filename}"`,
+      },
+    });
+  } catch (error) {
+    console.error("Error serving audio file:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

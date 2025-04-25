@@ -21,12 +21,18 @@ export default function Home() {
               Features
             </Link>
             <SignedIn>
-              <Link href="/dashboard" className="text-sm font-medium hover:text-primary">
+              <Link
+                href="/dashboard"
+                className="text-sm font-medium hover:text-primary"
+              >
                 Dashboard
               </Link>
             </SignedIn>
             <SignedOut>
-              <Link href="/sign-in" className="text-sm font-medium hover:text-primary">
+              <Link
+                href="/sign-in"
+                className="text-sm font-medium hover:text-primary"
+              >
                 Sign In
               </Link>
             </SignedOut>

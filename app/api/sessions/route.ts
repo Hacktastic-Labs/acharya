@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     // 4. Get the ID of the inserted row
     // Primary focus for MySQL is insertId
-    const insertedId = insertResult?.insertId ?? insertResult?.[0]?.insertId;
+    const insertedId = (insertResult as any[])[0]?.insertId;
 
     // --- Log the extracted ID ---
     // <<< ADDED DEBUG LOG >>>
