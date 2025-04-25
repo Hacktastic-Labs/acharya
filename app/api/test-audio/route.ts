@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@deepgram/sdk";
 import fs from "fs";
 import path from "path";
-import { pipeline } from "stream/promises";
-import { Readable } from "stream";
+import { put } from "@vercel/blob";
 
 // Function to generate audio from text using Deepgram
 async function generateTestAudio(text: string): Promise<string | null> {
@@ -32,26 +31,10 @@ async function generateTestAudio(text: string): Promise<string | null> {
     const randomString = Math.random().toString(36).substring(7);
     const outputFileName = `test-${timestamp}-${randomString}.mp3`;
 
-    // In Vercel, we'll store files in /tmp
-    const outputDir = path.join("/tmp");
-    const outputPath = path.join(outputDir, outputFileName);
-    // The public path will be served through our API
-    const publicPath = `/api/audio/${outputFileName}`;
-
     console.log("Test audio generation parameters:");
     console.log("- API Key exists:", !!deepgramApiKey);
     console.log("- Text length:", text.length);
-    console.log("- Output directory:", outputDir);
-    console.log("- Output file:", outputFileName);
-
-    // Ensure the directory exists
-    try {
-      await fs.promises.mkdir(outputDir, { recursive: true });
-      console.log("Verified temp directory exists");
-    } catch (error) {
-      console.error("Error creating directory:", error);
-      throw new Error("Failed to create temp directory");
-    }
+    console.log("- Output filename:", outputFileName);
 
     console.log("Making Deepgram request...");
     const response = await deepgram.speak.request(
@@ -63,9 +46,8 @@ async function generateTestAudio(text: string): Promise<string | null> {
     const stream = await response.getStream();
     if (stream) {
       console.log("Got audio stream from Deepgram");
-      const file = fs.createWriteStream(outputPath);
 
-      // Convert Web Stream to Node.js Readable stream
+      // Convert Web Stream to Node.js Buffer
       const chunks: Uint8Array[] = [];
       const reader = stream.getReader();
 
@@ -82,27 +64,30 @@ async function generateTestAudio(text: string): Promise<string | null> {
 
       console.log(`Read ${bytesRead} bytes from stream`);
 
-      // Create a readable stream from the chunks
+      // Get the audio buffer
       const buffer = Buffer.concat(chunks);
-      const nodeStream = Readable.from(buffer);
 
-      // Pipe to file using Node.js streams
-      await pipeline(nodeStream, file);
-
-      console.log(`Audio file written to ${outputPath}`);
-
-      // Double check file exists
-      const fileExists = fs.existsSync(outputPath);
-      const fileSize = fileExists ? fs.statSync(outputPath).size : 0;
-      console.log(`File exists: ${fileExists}, Size: ${fileSize} bytes`);
-
-      // Store the file path in a Map with timestamp for cleanup
-      audioFiles.set(outputFileName, {
-        path: outputPath,
-        timestamp: Date.now(),
-      });
-
-      return publicPath;
+      // Upload the buffer to Vercel Blob
+      if (buffer.length > 0) {
+        try {
+          const blob = await put(outputFileName, buffer, {
+            access: "public",
+            contentType: "audio/mpeg",
+          });
+          console.log(`Test audio uploaded to Vercel Blob: ${blob.url}`);
+          // Return the public URL from Vercel Blob
+          return blob.url;
+        } catch (uploadError) {
+          console.error(
+            "Error uploading test audio to Vercel Blob:",
+            uploadError
+          );
+          return null; // Return null if upload fails
+        }
+      } else {
+        console.error("Generated test audio buffer is empty.");
+        return null;
+      }
     } else {
       console.error("Error generating audio: No stream returned");
       return null;
@@ -113,30 +98,8 @@ async function generateTestAudio(text: string): Promise<string | null> {
   }
 }
 
-// Store audio file information for cleanup
-const audioFiles = new Map<string, { path: string; timestamp: number }>();
-
-// Cleanup function to remove old files (older than 1 hour)
-function cleanupOldFiles() {
-  const oneHourAgo = Date.now() - 3600000; // 1 hour in milliseconds
-  for (const [filename, fileInfo] of audioFiles.entries()) {
-    if (fileInfo.timestamp < oneHourAgo) {
-      try {
-        fs.unlinkSync(fileInfo.path);
-        audioFiles.delete(filename);
-        console.log(`Cleaned up old audio file: ${filename}`);
-      } catch (error) {
-        console.error(`Error cleaning up file ${filename}:`, error);
-      }
-    }
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
-    // Clean up old files before processing new request
-    cleanupOldFiles();
-
     // Get body data
     const { text } = await request.json();
 
@@ -174,31 +137,5 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
-  }
-}
-
-// Add a GET route to serve the audio files
-export async function GET(request: NextRequest) {
-  try {
-    const filename = request.url.split("/audio/")[1];
-    if (!filename) {
-      return new NextResponse("File not found", { status: 404 });
-    }
-
-    const filePath = path.join("/tmp", filename);
-    if (!fs.existsSync(filePath)) {
-      return new NextResponse("File not found", { status: 404 });
-    }
-
-    const fileBuffer = await fs.promises.readFile(filePath);
-    return new NextResponse(fileBuffer, {
-      headers: {
-        "Content-Type": "audio/mpeg",
-        "Content-Disposition": `inline; filename="${filename}"`,
-      },
-    });
-  } catch (error) {
-    console.error("Error serving audio file:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
