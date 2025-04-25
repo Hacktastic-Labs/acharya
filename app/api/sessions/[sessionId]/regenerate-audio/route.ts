@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { sessions, generatedContent } from "@/db/schema";
+import { sessions, generated_content } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { createClient } from "@deepgram/sdk";
 import fs from "fs";
@@ -105,10 +105,10 @@ export async function POST(
     }
 
     // Find the content item
-    const contentItem = await db.query.generatedContent.findFirst({
+    const contentItem = await db.query.generated_content.findFirst({
       where: and(
-        eq(generatedContent.id, contentId),
-        eq(generatedContent.sessionId, sessionId)
+        eq(generated_content.id, contentId),
+        eq(generated_content.sessionId, sessionId)
       ),
     });
 
@@ -284,12 +284,12 @@ export async function POST(
 
     // Update the content item in the database
     await db
-      .update(generatedContent)
+      .update(generated_content)
       .set({
         content: updatedContent,
         updatedAt: new Date(),
       })
-      .where(eq(generatedContent.id, contentId));
+      .where(eq(generated_content.id, contentId));
 
     return NextResponse.json({
       success: true,
