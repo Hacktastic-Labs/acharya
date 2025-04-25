@@ -14,6 +14,7 @@ import { Readable } from "stream";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
 import { documents, sessions, generated_content } from "@/db/schema";
+import { put } from "@vercel/blob";
 
 // --- Define structure for action results (shared by both actions) ---
 export interface ActionResult {
@@ -123,20 +124,6 @@ async function generateConversationAudio(
     const timestamp = new Date().getTime();
     const randomString = Math.random().toString(36).substring(7);
     const outputFileName = `conversation-${timestamp}-${randomString}.mp3`;
-    // In Vercel, we'll store files in /tmp
-    const outputDir = path.join("/tmp");
-    const outputPath = path.join(outputDir, outputFileName);
-    // The public path will be served through our API
-    const publicPath = `/api/audio/${outputFileName}`;
-
-    // Ensure the directory exists
-    try {
-      await fs.promises.mkdir(outputDir, { recursive: true });
-      console.log("Verified temp directory exists");
-    } catch (error) {
-      console.error("Error creating directory:", error);
-      throw new Error("Failed to create temp directory");
-    }
 
     const response = await deepgram.speak.request(
       { text: conversationText },
@@ -147,9 +134,6 @@ async function generateConversationAudio(
 
     const stream = await response.getStream();
     if (stream) {
-      const file = fs.createWriteStream(outputPath);
-
-      // Convert Web Stream to Node.js Readable stream
       const chunks: Uint8Array[] = [];
       const reader = stream.getReader();
 
@@ -166,56 +150,25 @@ async function generateConversationAudio(
 
       console.log(`Read ${bytesRead} bytes from stream`);
 
-      // Create a readable stream from the chunks
       const buffer = Buffer.concat(chunks);
-      const nodeStream = Readable.from(buffer);
 
-      // Pipe to file using Node.js streams
-      await pipeline(nodeStream, file);
-
-      console.log(`Audio file written to ${outputPath}`);
-
-      // Double check file exists and confirm with the API
-      const fileExists = fs.existsSync(outputPath);
-      const fileSize = fileExists ? fs.statSync(outputPath).size : 0;
-      console.log(`File exists: ${fileExists}, Size: ${fileSize} bytes`);
-
-      if (fileExists && fileSize > 0) {
-        // Confirm file exists through the API
+      if (buffer.length > 0) {
         try {
-          // Get the base URL from environment variable or construct it
-          const baseUrl = process.env.VERCEL_URL
-            ? `https://${process.env.VERCEL_URL}`
-            : process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-
-          const confirmResponse = await fetch(`${baseUrl}/api/audio/confirm`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ filename: outputFileName }),
+          const blob = await put(outputFileName, buffer, {
+            access: "public",
+            contentType: "audio/mpeg",
           });
+          console.log(`Audio file uploaded to Vercel Blob: ${blob.url}`);
 
-          if (!confirmResponse.ok) {
-            console.error("Failed to confirm file existence through API");
-            return null;
-          }
-
-          const confirmData = await confirmResponse.json();
-          if (!confirmData.success) {
-            console.error("File confirmation failed:", confirmData.message);
-            return null;
-          }
-
-          console.log("File confirmed through API:", confirmData.details);
-          return publicPath;
-        } catch (error) {
-          console.error("Error confirming file through API:", error);
+          return blob.url;
+        } catch (uploadError) {
+          console.error("Error uploading audio to Vercel Blob:", uploadError);
           return null;
         }
+      } else {
+        console.error("Generated audio buffer is empty.");
+        return null;
       }
-
-      return null;
     } else {
       console.error("Error generating audio: No stream returned");
       return null;
