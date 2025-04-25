@@ -4,6 +4,29 @@ import * as schema from "./schema";
 import fs from "fs"; // Import the file system module
 import path from "path"; // Import the path module
 
+// Function to get SSL configuration
+const getSSLConfig = () => {
+  // In production, try to use SSL certificate if available
+  if (process.env.NODE_ENV === "production") {
+    try {
+      const certPath = path.resolve(process.cwd(), "cert/ca.pem");
+      if (fs.existsSync(certPath)) {
+        return {
+          ca: fs.readFileSync(certPath),
+          rejectUnauthorized: true,
+        };
+      }
+    } catch (error) {
+      console.warn(
+        "SSL certificate not found, falling back to non-SSL connection"
+      );
+    }
+  }
+
+  // Return undefined for development or if cert not found
+  return undefined;
+};
+
 // Create the connection with improved connection options
 const poolConnection = mysql.createPool({
   uri: process.env.DATABASE_URL,
@@ -11,12 +34,7 @@ const poolConnection = mysql.createPool({
   connectTimeout: 30000,
   waitForConnections: true,
   queueLimit: 0,
-  // Configure SSL to trust the CA certificate
-  ssl: {
-    // Provide the path to your CA certificate file relative to the project root
-    ca: fs.readFileSync(path.resolve(process.cwd(), "cert/ca.pem")), // <--- MODIFIED LINE
-    rejectUnauthorized: true, // Keep this as true to ensure certificate validation
-  },
+  ssl: getSSLConfig(),
   enableKeepAlive: true,
   keepAliveInitialDelay: 10000,
 });
