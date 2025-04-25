@@ -19,7 +19,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable";
 import { InteractiveFlashcards } from "@/components/interactive-flashcards";
 
 // Icons
@@ -78,23 +82,29 @@ function SubmitButton({ text = "Submit", pendingText = "Processing..." }) {
 
 // --- Helper Component for Displaying Results ---
 function ResultsDisplay({ resultState }: { resultState: ActionResult | null }) {
-  const [activeTab, setActiveTab] = useState<"flashcards" | "summary" | "monologue">("flashcards");
+  const [activeTab, setActiveTab] = useState<
+    "flashcards" | "summary" | "monologue"
+  >("flashcards");
   const [isPlaying, setIsPlaying] = useState(false);
   const [enhancedSummary, setEnhancedSummary] = useState<string | null>(null);
 
   // Determine which tabs are available - moved outside conditional
   const availableTabs = resultState
-    ? [
+    ? ([
         resultState.flashcardsText ? "flashcards" : null,
         resultState.summaryText ? "summary" : null,
         resultState.monologueText ? "monologue" : null,
-      ].filter(Boolean) as ("flashcards" | "summary" | "monologue")[]
+      ].filter(Boolean) as ("flashcards" | "summary" | "monologue")[])
     : [];
 
   // Set active tab to the first available if current is not available
   // This useEffect must be called in every render
   useEffect(() => {
-    if (resultState && availableTabs.length > 0 && !availableTabs.includes(activeTab)) {
+    if (
+      resultState &&
+      availableTabs.length > 0 &&
+      !availableTabs.includes(activeTab)
+    ) {
       setActiveTab(availableTabs[0]);
     }
   }, [resultState, availableTabs, activeTab]);
@@ -102,39 +112,52 @@ function ResultsDisplay({ resultState }: { resultState: ActionResult | null }) {
   // Format summary text to handle markdown better
   const formatSummaryText = (text: string) => {
     if (!text) return "";
-    
+
     // Clean up special characters and formatting issues
     let cleaned = text
-      .replace(/[^\w\s.,;:?!()[\]{}'"<>@#$%^&*+=\-_\\|/~`]|[^\x00-\x7F]/g, '') // Remove non-standard chars
-      .replace(/\*\*/g, '') // Remove markdown bold
-      .replace(/\*/g, '') // Remove markdown italics
-      .replace(/`/g, '') // Remove code ticks
-      .replace(/\n{3,}/g, '\n\n') // Replace multiple newlines with just two
+      .replace(/[^\w\s.,;:?!()[\]{}'"<>@#$%^&*+=\-_\\|/~`]|[^\x00-\x7F]/g, "") // Remove non-standard chars
+      .replace(/\*\*/g, "") // Remove markdown bold
+      .replace(/\*/g, "") // Remove markdown italics
+      .replace(/`/g, "") // Remove code ticks
+      .replace(/\n{3,}/g, "\n\n") // Replace multiple newlines with just two
       .trim();
-    
+
     // Replace markdown bullet points with proper HTML
-    let formatted = cleaned.replace(/^\s*[\-\*]\s+(.+)$/gm, '<li>$1</li>');
-    
+    let formatted = cleaned.replace(/^\s*[\-\*]\s+(.+)$/gm, "<li>$1</li>");
+
     // Wrap lists in ul tags
-    formatted = formatted.replace(/<li>(.+?)<\/li>(\s*<li>)/g, '<li>$1</li>$2');
-    formatted = formatted.replace(/(<li>.+<\/li>)/gs, '<ul class="list-disc pl-5 my-3">$1</ul>');
-    
+    formatted = formatted.replace(/<li>(.+?)<\/li>(\s*<li>)/g, "<li>$1</li>$2");
+    formatted = formatted.replace(
+      /(<li>[^]*?<\/li>)/g,
+      '<ul class="list-disc pl-5 my-3">$1</ul>'
+    );
+
     // Handle headings
-    formatted = formatted.replace(/^#+\s+(.+)$/gm, '<h3 class="text-lg font-semibold my-3 text-foreground">$1</h3>');
-    
+    formatted = formatted.replace(
+      /^#+\s+(.+)$/gm,
+      '<h3 class="text-lg font-semibold my-3 text-foreground">$1</h3>'
+    );
+
     // Handle paragraphs - ensure they have proper text color
-    formatted = formatted.replace(/^([^<\n].+)$/gm, '<p class="text-foreground my-2">$1</p>');
-    
+    formatted = formatted.replace(
+      /^([^<\n].+)$/gm,
+      '<p class="text-foreground my-2">$1</p>'
+    );
+
     // Remove empty paragraphs
-    formatted = formatted.replace(/<p[^>]*>\s*<\/p>/g, '');
-    
+    formatted = formatted.replace(/<p[^>]*>\s*<\/p>/g, "");
+
     return formatted;
   };
 
   // Use Gemini to enhance the summary when the tab changes to summary
   useEffect(() => {
     const enhanceSummaryWithGemini = async () => {
-      if (activeTab === "summary" && resultState?.summaryText && !enhancedSummary) {
+      if (
+        activeTab === "summary" &&
+        resultState?.summaryText &&
+        !enhancedSummary
+      ) {
         try {
           // We'll use the existing summary for now, but in a real implementation
           // you would call the Gemini API here to enhance the content
@@ -146,7 +169,7 @@ function ResultsDisplay({ resultState }: { resultState: ActionResult | null }) {
         }
       }
     };
-    
+
     enhanceSummaryWithGemini();
   }, [activeTab, resultState?.summaryText, enhancedSummary]);
 
@@ -180,15 +203,22 @@ function ResultsDisplay({ resultState }: { resultState: ActionResult | null }) {
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-4 border-b">
-        <h2 className={`text-lg font-semibold flex items-center ${
-          resultState.success ? "text-green-700 dark:text-green-500" : "text-red-700 dark:text-red-500"
-        }`}>
+        <h2
+          className={`text-lg font-semibold flex items-center ${
+            resultState.success
+              ? "text-green-700 dark:text-green-500"
+              : "text-red-700 dark:text-red-500"
+          }`}
+        >
           <PanelRight className="mr-2 h-5 w-5" />
           {resultState.success ? "Processing Successful" : "Processing Failed"}
         </h2>
       </div>
       <div className="flex-1 overflow-auto">
-        <Alert variant={resultState.success ? "default" : "destructive"} className="m-4">
+        <Alert
+          variant={resultState.success ? "default" : "destructive"}
+          className="m-4"
+        >
           <AlertTitle>{resultState.success ? "Status" : "Error"}</AlertTitle>
           <AlertDescription>{resultState.message}</AlertDescription>
           {resultState.error && !resultState.success && (
@@ -251,15 +281,17 @@ function ResultsDisplay({ resultState }: { resultState: ActionResult | null }) {
             <div className="pb-6">
               {activeTab === "flashcards" && resultState.flashcardsText && (
                 <div className="bg-background rounded-md border shadow-sm">
-                  <InteractiveFlashcards flashcardsText={resultState.flashcardsText} />
+                  <InteractiveFlashcards
+                    flashcardsText={resultState.flashcardsText}
+                  />
                 </div>
               )}
 
               {activeTab === "summary" && resultState.summaryText && (
                 <div className="bg-card p-4 rounded-md border text-card-foreground">
                   {enhancedSummary ? (
-                    <div 
-                      className="prose prose-sm dark:prose-invert max-w-none text-foreground" 
+                    <div
+                      className="prose prose-sm dark:prose-invert max-w-none text-foreground"
                       dangerouslySetInnerHTML={{ __html: enhancedSummary }}
                     />
                   ) : (
@@ -284,7 +316,7 @@ function ResultsDisplay({ resultState }: { resultState: ActionResult | null }) {
                           size="icon"
                           variant="outline"
                           onClick={() => {
-                            const audio = document.querySelector('audio');
+                            const audio = document.querySelector("audio");
                             if (audio) {
                               if (audio.paused) {
                                 audio.play();
@@ -297,24 +329,35 @@ function ResultsDisplay({ resultState }: { resultState: ActionResult | null }) {
                           }}
                           className="h-10 w-10 rounded-full"
                         >
-                          {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                          {isPlaying ? (
+                            <Pause className="h-5 w-5" />
+                          ) : (
+                            <Play className="h-5 w-5" />
+                          )}
                         </Button>
                         <div className="flex-1">
-                          <audio 
-                            src={resultState.audioFilePath} 
+                          <audio
+                            src={resultState.audioFilePath}
                             onEnded={() => setIsPlaying(false)}
                             onPause={() => setIsPlaying(false)}
                             onPlay={() => setIsPlaying(true)}
                           />
-                          <div className="text-sm font-medium">Generated Audio</div>
+                          <div className="text-sm font-medium">
+                            Generated Audio
+                          </div>
                           <div className="text-xs text-muted-foreground">
-                            Click to {isPlaying ? "pause" : "play"} the monologue
+                            Click to {isPlaying ? "pause" : "play"} the
+                            monologue
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* AI Assistant Animation */}
-                      <div className={`mt-4 p-3 bg-primary/5 rounded-lg border border-primary/20 ${isPlaying ? 'block' : 'hidden'}`}>
+                      <div
+                        className={`mt-4 p-3 bg-primary/5 rounded-lg border border-primary/20 ${
+                          isPlaying ? "block" : "hidden"
+                        }`}
+                      >
                         <div className="flex items-start space-x-3">
                           <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                             <Bot className="h-5 w-5 text-primary" />
@@ -326,12 +369,23 @@ function ResultsDisplay({ resultState }: { resultState: ActionResult | null }) {
                                 <div className="flex items-center">
                                   <span>Speaking</span>
                                   <span className="ml-2 flex space-x-1">
-                                    <span className="inline-block w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                                    <span className="inline-block w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                                    <span className="inline-block w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                                    <span
+                                      className="inline-block w-1.5 h-1.5 bg-primary rounded-full animate-bounce"
+                                      style={{ animationDelay: "0ms" }}
+                                    ></span>
+                                    <span
+                                      className="inline-block w-1.5 h-1.5 bg-primary rounded-full animate-bounce"
+                                      style={{ animationDelay: "150ms" }}
+                                    ></span>
+                                    <span
+                                      className="inline-block w-1.5 h-1.5 bg-primary rounded-full animate-bounce"
+                                      style={{ animationDelay: "300ms" }}
+                                    ></span>
                                   </span>
                                 </div>
-                              ) : "Ready to speak"}
+                              ) : (
+                                "Ready to speak"
+                              )}
                             </div>
                           </div>
                         </div>
@@ -394,11 +448,11 @@ function UploadPanel({
               <div className="space-y-4">
                 <h3 className="text-base font-medium">Upload Document</h3>
                 <p className="text-sm text-muted-foreground">
-                  Upload {ALLOWED_FILE_EXTENSIONS_STR} (max {MAX_FILE_SIZE_MB}MB) to generate flashcards, summary,
-                  and monologue.
+                  Upload {ALLOWED_FILE_EXTENSIONS_STR} (max {MAX_FILE_SIZE_MB}
+                  MB) to generate flashcards, summary, and monologue.
                 </p>
               </div>
-              
+
               {/* Consider the Label approach mentioned earlier if preferred */}
               <input
                 type="file"
@@ -439,11 +493,7 @@ function UploadPanel({
                   {(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
                 </p>
               )}
-              <input
-                type="hidden"
-                name="processingOption"
-                value="all"
-              />
+              <input type="hidden" name="processingOption" value="all" />
               <SubmitButton
                 text="Generate Flashcards, Summary & Monologue"
                 pendingText="Processing File..."
@@ -457,15 +507,15 @@ function UploadPanel({
               <div className="space-y-4">
                 <h3 className="text-base font-medium">Add YouTube Video</h3>
                 <p className="text-sm text-muted-foreground">
-                  Paste a YouTube video link to generate flashcards,
-                  summary, and monologue.
+                  Paste a YouTube video link to generate flashcards, summary,
+                  and monologue.
                   <span className="block text-xs text-amber-700 mt-1">
-                    Note: Processing may take longer. Success depends on
-                    URL accessibility and transcript availability.
+                    Note: Processing may take longer. Success depends on URL
+                    accessibility and transcript availability.
                   </span>
                 </p>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="youtube-url">YouTube URL</Label>
                 <Input
@@ -485,11 +535,7 @@ function UploadPanel({
                   Enter a valid YouTube video URL above.
                 </p>
               </div>
-              <input
-                type="hidden"
-                name="processingOption"
-                value="all"
-              />
+              <input type="hidden" name="processingOption" value="all" />
               <SubmitButton
                 text="Generate Flashcards, Summary & Monologue"
                 pendingText="Processing Video..."
@@ -586,7 +632,9 @@ export default function UploadPage() {
     }
   };
 
-  const handleYoutubeUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleYoutubeUrlChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setYoutubeUrl(event.target.value);
     setResultState(null);
   };
@@ -596,14 +644,17 @@ export default function UploadPage() {
       <DashboardHeader />
       <div className="mt-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight">Upload & Process Content</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Upload & Process Content
+          </h1>
           <p className="text-muted-foreground">
-            Upload documents or YouTube videos to generate AI-powered flashcards, summaries, and audio monologues.
+            Upload documents or YouTube videos to generate AI-powered
+            flashcards, summaries, and audio monologues.
           </p>
         </div>
         <ResizablePanelGroup direction="horizontal">
           <ResizablePanel defaultSize={40} minSize={30}>
-            <UploadPanel 
+            <UploadPanel
               fileInputRef={fileInputRef}
               youtubeUrlInputRef={youtubeUrlInputRef}
               selectedFile={selectedFile}

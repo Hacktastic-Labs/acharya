@@ -13,7 +13,11 @@ import {
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 
-export default function PodcastPage({ params }: { params: { id: string } }) {
+export default function PodcastPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   return (
     <div className="flex min-h-screen flex-col">
       <DashboardHeader />

@@ -3,15 +3,12 @@ import { db } from "@/db"; // Assuming @/ is configured for your src directory
 import { sessions, generated_content } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-type Props = {
-  params: {
-    sessionId: string;
-  };
-};
-
-export async function GET(request: NextRequest, props: Props) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ sessionId: string }> }
+) {
   // Await the params to avoid the dynamic API error
-  const sessionIdString = props.params.sessionId;
+  const sessionIdString = (await params).sessionId;
 
   if (!sessionIdString) {
     return NextResponse.json(
@@ -85,8 +82,11 @@ export async function GET(request: NextRequest, props: Props) {
 }
 
 // TEST ENDPOINT: Add sample content to a session
-export async function PUT(request: NextRequest, props: Props) {
-  const sessionIdString = props.params.sessionId;
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ sessionId: string }> }
+) {
+  const sessionIdString = (await params).sessionId;
 
   if (!sessionIdString) {
     return NextResponse.json(
