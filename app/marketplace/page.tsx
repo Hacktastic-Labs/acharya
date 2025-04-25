@@ -110,7 +110,7 @@ function ListingDetailModal({ open, onClose, listing, onBuy, buying }: { open: b
           <FileText className="h-6 w-6 text-primary" /> {listing.title}
         </h2>
         <div className="mb-2 text-muted-foreground text-sm">Category: {listing.category}</div>
-        <div className="mb-2 text-muted-foreground text-sm">Uploaded by: {listing.uploader}</div>
+        <div className="mb-2 text-muted-foreground text-sm">Uploaded by: {shortAddress(listing.uploader)}</div>
         <div className="mb-4 text-base">{listing.description}</div>
         <div className="mb-4 flex items-center gap-2">
           <span className="font-semibold text-primary text-lg">
@@ -123,6 +123,14 @@ function ListingDetailModal({ open, onClose, listing, onBuy, buying }: { open: b
       </div>
     </div>
   );
+}
+
+// Utility to shorten wallet address
+function shortAddress(addr: string) {
+  if (!addr) return "";
+  if (addr.startsWith("0x") && addr.length > 6) return addr.slice(0, 4) + "..";
+  if (addr.length > 6) return addr.slice(0, 2) + "..";
+  return addr;
 }
 
 function MarketplaceContent() {
@@ -215,8 +223,21 @@ function MarketplaceContent() {
     const description = formData.get("description");
     const category = formData.get("category");
     const price = formData.get("price");
-    // TODO: handle file upload and get fileUrl
-    const fileUrl = null;
+    const file = formData.get("file") as File | null;
+
+    let fileUrl = null;
+    if (file && file.size > 0) {
+      // Upload to /api/upload
+      const uploadForm = new FormData();
+      uploadForm.append("file", file);
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadForm,
+      });
+      const uploadData = await uploadRes.json();
+      fileUrl = uploadData.url;
+    }
+
     const uploader = account?.address?.toString() || keylessAccount?.accountAddress || "Anonymous";
     const res = await fetch("/api/marketplace", {
       method: "POST",
@@ -271,15 +292,20 @@ function MarketplaceContent() {
                         <FileText className="h-5 w-5 text-primary" />
                         <CardTitle>{listing.title}</CardTitle>
                       </div>
-                      <CardDescription>{listing.category} • Uploaded by {listing.uploader}</CardDescription>
+                      <CardDescription>{listing.category} • Uploaded by {shortAddress(listing.uploader)}</CardDescription>
                     </CardHeader>
                     <CardContent className="flex-1">
                       <p className="text-muted-foreground mb-2">{listing.description}</p>
                     </CardContent>
-                    <CardFooter>
+                    <CardFooter className="flex items-center justify-between">
                       <span className="font-semibold text-primary">
                         {listing.price === "0" ? "Free" : `${listing.price} APT`}
                       </span>
+                      {listing.file_url && (
+                        <Button asChild size="sm" variant="outline">
+                          <a href={listing.file_url} target="_blank" rel="noopener noreferrer">View PDF</a>
+                        </Button>
+                      )}
                     </CardFooter>
                   </Card>
                 ))}
@@ -297,7 +323,7 @@ function MarketplaceContent() {
                   <FileText className="h-5 w-5 text-primary" />
                   <CardTitle>{listing.title}</CardTitle>
                 </div>
-                <CardDescription>{listing.category} • Uploaded by {listing.uploader}</CardDescription>
+                <CardDescription>{listing.category} • Uploaded by {shortAddress(listing.uploader)}</CardDescription>
               </CardHeader>
               <CardContent className="flex-1">
                 <p className="text-muted-foreground mb-2">{listing.description}</p>
