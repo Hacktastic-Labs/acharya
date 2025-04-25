@@ -22,7 +22,7 @@ const poolConnection = mysql.createPool({
   // Configure SSL to trust the CA certificate
   ssl: {
     // Provide the path to your CA certificate file
-    ca: fs.readFileSync(path.resolve(currentDir, "../../certs/ca.crt")), // Adjust the path '../certs/ca.crt' based on where you stored the file relative to THIS file
+    ca: fs.readFileSync(path.resolve(currentDir, "../../cert/ca.pem")), // Adjust the path '../certs/ca.crt' based on where you stored the file relative to THIS file
     rejectUnauthorized: true, // Keep this as true to ensure certificate validation
   },
   enableKeepAlive: true,
