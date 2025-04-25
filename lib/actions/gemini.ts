@@ -175,12 +175,47 @@ async function generateConversationAudio(
 
       console.log(`Audio file written to ${outputPath}`);
 
-      // Double check file exists
+      // Double check file exists and confirm with the API
       const fileExists = fs.existsSync(outputPath);
       const fileSize = fileExists ? fs.statSync(outputPath).size : 0;
       console.log(`File exists: ${fileExists}, Size: ${fileSize} bytes`);
 
-      return publicPath;
+      if (fileExists && fileSize > 0) {
+        // Confirm file exists through the API
+        try {
+          // Get the base URL from environment variable or construct it
+          const baseUrl = process.env.VERCEL_URL
+            ? `https://${process.env.VERCEL_URL}`
+            : process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+
+          const confirmResponse = await fetch(`${baseUrl}/api/audio/confirm`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ filename: outputFileName }),
+          });
+
+          if (!confirmResponse.ok) {
+            console.error("Failed to confirm file existence through API");
+            return null;
+          }
+
+          const confirmData = await confirmResponse.json();
+          if (!confirmData.success) {
+            console.error("File confirmation failed:", confirmData.message);
+            return null;
+          }
+
+          console.log("File confirmed through API:", confirmData.details);
+          return publicPath;
+        } catch (error) {
+          console.error("Error confirming file through API:", error);
+          return null;
+        }
+      }
+
+      return null;
     } else {
       console.error("Error generating audio: No stream returned");
       return null;
