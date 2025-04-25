@@ -112,7 +112,7 @@ export function EnhancedChat({
         className
       )}
     >
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between p-4 border-b shrink-0">
         <div className="flex items-center gap-2">
           <Brain className="h-5 w-5 text-primary animate-pulse" />
           <h2 className="text-lg font-semibold">AI Assistant</h2>
@@ -132,7 +132,7 @@ export function EnhancedChat({
         </div>
       </div>
 
-      <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+      <ScrollArea className="flex-1 p-4 min-h-0" ref={scrollAreaRef}>
         <div className="space-y-4">
           {messages.map((message) => (
             <div
@@ -186,7 +186,7 @@ export function EnhancedChat({
         </div>
       </ScrollArea>
 
-      <form onSubmit={handleSubmit} className="p-4 border-t">
+      <form onSubmit={handleSubmit} className="p-4 border-t shrink-0">
         <div className="flex items-center gap-2">
           <Input
             placeholder="Ask me anything about your documents..."
