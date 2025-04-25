@@ -10,6 +10,8 @@
     "migrate": "npx tsx scripts/migrate.ts"
   },
   "dependencies": {
+    "@aptos-labs/ts-sdk": "^1.38.0",
+    "@aptos-labs/wallet-adapter-react": "^5.0.4",
     "@clerk/nextjs": "^6.13.0",
     "@deepgram/sdk": "^3.11.3",
     "@google/generative-ai": "^0.24.0",
