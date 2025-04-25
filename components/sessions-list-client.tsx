@@ -27,7 +27,6 @@ export function SessionsListClient({ sessions }: SessionsListClientProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Your Sessions</h3>
         <Button asChild>
           <Link href="/upload">
             <Plus className="mr-2 h-4 w-4" />

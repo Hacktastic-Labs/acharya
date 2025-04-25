@@ -1,5 +1,3 @@
-import { DashboardHeader } from "@/components/dashboard-header";
-import { DashboardShell } from "@/components/dashboard-shell";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,6 +14,77 @@ export default function SummaryPage({
   params: Promise<{ id: string }>;
 }) {
   return (
+    <div className="flex-1 space-y-4 p-8 pt-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">
+            Introduction to Neural Networks
+          </h2>
+          <p className="text-muted-foreground">
+            Generated from PDF • 3 days ago
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm">
+            <Download className="mr-2 h-4 w-4" />
+            Download
+          </Button>
+          <Button variant="outline" size="sm">
+            <Share2 className="mr-2 h-4 w-4" />
+            Share
+          </Button>
+          <Button size="sm">
+            <BookOpen className="mr-2 h-4 w-4" />
+            Generate Flashcards
+          </Button>
+        </div>
+      </div>
+
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Executive Summary</CardTitle>
+          <CardDescription>Key points from the document</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ul className="list-disc list-inside space-y-2">
+            <li>
+              Neural networks are computational models inspired by the human
+              brain's structure and function.
+            </li>
+            <li>
+              They consist of interconnected nodes (neurons) organized in
+              layers that process information.
+            </li>
+            <li>
+              Deep learning is a subset of neural networks with multiple
+              hidden layers.
+            </li>
+            <li>
+              Neural networks excel at pattern recognition, classification,
+              and prediction tasks.
+            </li>
+            <li>
+              Training involves adjusting weights through backpropagation to
+              minimize error.
+            </li>
+          </ul>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Detailed Summary</CardTitle>
+          <CardDescription>
+            Comprehensive overview of the document
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="prose dark:prose-invert max-w-none">
+          <h3>Introduction</h3>
+          <p>
+            Neural networks represent a fundamental paradigm shift in
+            computing, moving away from traditional algorithmic approaches
+            toward systems that can learn from data. Inspired by the
+            biological neural networks in the human brain, artificial neural
     <div className="flex min-h-screen flex-col">
       <DashboardHeader />
       <DashboardShell>
