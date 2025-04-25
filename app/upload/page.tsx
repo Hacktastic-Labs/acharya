@@ -6,7 +6,6 @@ import { useState, useRef, useEffect } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 
 // UI Components
-import { DashboardHeader } from "@/components/dashboard-header";
 import {
   Card,
   CardContent,
@@ -642,7 +641,6 @@ export default function UploadPage() {
 
   return (
     <div className="max-w-screen-xl mx-auto p-4">
-      <DashboardHeader />
       <div className="mt-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight">
