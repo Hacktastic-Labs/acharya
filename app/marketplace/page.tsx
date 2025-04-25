@@ -7,6 +7,7 @@ import { Plus, FileText, BookOpen, X } from "lucide-react";
 import { AptosWalletConnect } from "@/components/aptos-wallet-connect";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { KeylessProvider, useKeyless } from "@/components/aptos-keyless-context";
+import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 
 const sampleListings = [
   {
@@ -29,7 +30,7 @@ const sampleListings = [
     id: 3,
     title: "Organic Chemistry Mindmap",
     description: "Visual mindmap for quick revision before exams.",
-    price: 1.2,
+    price: 0.002,
     category: "Mindmap",
     uploader: "Priya Singh",
   },
@@ -120,11 +121,88 @@ function CreateListingModal({ open, onClose, disabled }: { open: boolean; onClos
   );
 }
 
+function ListingDetailModal({ open, onClose, listing, onBuy, buying }: { open: boolean; onClose: () => void; listing: any; onBuy: () => void; buying?: boolean }) {
+  if (!open || !listing) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-background rounded-xl shadow-lg w-full max-w-md p-6 relative">
+        <button
+          className="absolute top-3 right-3 text-muted-foreground hover:text-foreground"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <X className="h-5 w-5" />
+        </button>
+        <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+          <FileText className="h-6 w-6 text-primary" /> {listing.title}
+        </h2>
+        <div className="mb-2 text-muted-foreground text-sm">Category: {listing.category}</div>
+        <div className="mb-2 text-muted-foreground text-sm">Uploaded by: {listing.uploader}</div>
+        <div className="mb-4 text-base">{listing.description}</div>
+        <div className="mb-4 flex items-center gap-2">
+          <span className="font-semibold text-primary text-lg">
+            {listing.price === 0 ? "Free" : `${listing.price} APT`}
+          </span>
+        </div>
+        <Button className="w-full" onClick={onBuy} disabled={listing.price === 0 || buying}>
+          {buying ? "Processing..." : (listing.price === 0 ? "Download (Coming Soon)" : `Buy for ${listing.price} APT`)}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function MarketplaceContent() {
   const [modalOpen, setModalOpen] = useState(false);
-  const { connected } = useWallet();
+  const [selectedListing, setSelectedListing] = useState<any>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [buying, setBuying] = useState(false);
+  const { connected, account, signAndSubmitTransaction } = useWallet();
   const { keylessAccount } = useKeyless();
-  const isConnected = connected || !!keylessAccount;
+
+  function handleViewBuy(listing: any) {
+    setSelectedListing(listing);
+    setDetailOpen(true);
+  }
+
+  async function handleBuy() {
+    if (!selectedListing) return;
+    setBuying(true);
+    // Use a valid Aptos testnet address for demo (replace with real uploader address in production)
+    const recipient = "0x1ecb02aa080e4eaf696222c19f12d4d4e486308043c874d0ff69b2142b0d0541";
+    const amount = selectedListing.price;
+    try {
+      if (connected && account) {
+        // Wallet adapter transaction (correct format)
+        const response = await signAndSubmitTransaction({
+          sender: account.address,
+          data: {
+            function: "0x1::coin::transfer",
+            typeArguments: ["0x1::aptos_coin::AptosCoin"],
+            functionArguments: [recipient, (amount * 1e8).toString()],
+          },
+        });
+        alert("Transaction sent! Hash: " + response.hash);
+      } else if (keylessAccount) {
+        const aptos = new Aptos(new AptosConfig({ network: Network.TESTNET }));
+        const tx = await aptos.transferCoinTransaction({
+          sender: keylessAccount.accountAddress,
+          recipient,
+          amount: amount * 1e8,
+        });
+        const committedTxn = await aptos.signAndSubmitTransaction({ signer: keylessAccount, transaction: tx });
+        alert("Transaction sent! Hash: " + committedTxn.hash);
+      } else {
+        alert("Not connected. Connect your wallet or sign in with Google.");
+      }
+      setDetailOpen(false);
+    } catch (err: any) {
+      alert("Transaction failed: " + (err.message || String(err)));
+    } finally {
+      setBuying(false);
+    }
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <div className="container py-12 flex flex-col gap-8">
@@ -139,9 +217,9 @@ function MarketplaceContent() {
           </div>
           <div className="flex flex-col items-end gap-2">
             <WalletStatus />
-            {!isConnected && <AptosWalletConnect />}
-            {!isConnected && <GoogleSignInButton />}
-            <Button size="lg" className="rounded-full" onClick={() => setModalOpen(true)} disabled={!isConnected}>
+            {!connected && !keylessAccount && <AptosWalletConnect />}
+            {!connected && !keylessAccount && <GoogleSignInButton />}
+            <Button size="lg" className="rounded-full" onClick={() => setModalOpen(true)} disabled={!connected && !keylessAccount}>
               <Plus className="h-5 w-5 mr-2" /> Create Listing
             </Button>
           </div>
@@ -165,7 +243,7 @@ function MarketplaceContent() {
                 <span className="font-semibold text-primary">
                   {listing.price === 0 ? "Free" : `${listing.price} APT`}
                 </span>
-                <Button size="sm" variant="secondary" disabled={!isConnected}>
+                <Button size="sm" variant="secondary" disabled={!connected && !keylessAccount} onClick={() => handleViewBuy(listing)}>
                   View / Buy
                 </Button>
               </CardFooter>
@@ -173,7 +251,8 @@ function MarketplaceContent() {
           ))}
         </div>
       </div>
-      <CreateListingModal open={modalOpen} onClose={() => setModalOpen(false)} disabled={!isConnected} />
+      <CreateListingModal open={modalOpen} onClose={() => setModalOpen(false)} disabled={!connected && !keylessAccount} />
+      <ListingDetailModal open={detailOpen} onClose={() => setDetailOpen(false)} listing={selectedListing} onBuy={handleBuy} buying={buying} />
     </div>
   );
 }

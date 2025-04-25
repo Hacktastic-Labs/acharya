@@ -15,21 +15,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <AptosWalletProvider>
-      <ClerkProvider>
-        <html lang="en" suppressHydrationWarning>
-          <body className={inter.className}>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ClerkProvider>
+            <AptosWalletProvider>
               {children}
-            </ThemeProvider>
-          </body>
-        </html>
-      </ClerkProvider>
-    </AptosWalletProvider>
+            </AptosWalletProvider>
+          </ClerkProvider>
+        </ThemeProvider>
+      </body>
+    </html>
   );
 }
