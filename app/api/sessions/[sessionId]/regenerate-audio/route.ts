@@ -84,9 +84,8 @@ async function generateAudio(text: string): Promise<string | null> {
 
 export async function POST(
   request: NextRequest,
-  context: { params: { sessionId: string } }
+  { params }: { params: { sessionId: string } }
 ) {
-  const params = context.params;
   const sessionId = parseInt(params.sessionId, 10);
 
   if (isNaN(sessionId)) {
