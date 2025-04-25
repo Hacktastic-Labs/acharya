@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,7 +10,7 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card";
-import { Plus, FileText, BookOpen, X } from "lucide-react";
+import { Plus, FileText, BookOpen, X, Copy, ChevronDown } from "lucide-react";
 import { AptosWalletConnect } from "@/components/aptos-wallet-connect";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import {
@@ -18,6 +18,14 @@ import {
   useKeyless,
 } from "@/components/aptos-keyless-context";
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
+
+// Utility to shorten wallet address (move to top-level scope)
+function shortAddress(addr: string) {
+  if (!addr) return "";
+  if (addr.startsWith("0x") && addr.length > 6) return addr.slice(0, 4) + "..";
+  if (addr.length > 6) return addr.slice(0, 2) + "..";
+  return addr;
+}
 
 function GoogleSignInButton() {
   const { keylessAccount, signInWithGoogle, signOut, loading, address } =
@@ -40,16 +48,58 @@ function GoogleSignInButton() {
 function WalletStatus() {
   const { connected, account, disconnect } = useWallet();
   const { keylessAccount, signOut, address: keylessAddress } = useKeyless();
-  if (connected) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Copy to clipboard
+  function copyAddress(addr: string) {
+    navigator.clipboard.writeText(addr);
+  }
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownOpen]);
+
+  if (connected && account) {
     return (
-      <div className="mb-2 flex items-center gap-2">
-        <div className="text-sm">
-          Wallet:{" "}
-          <span className="font-mono">{account?.address?.toString()}</span>
-        </div>
-        <Button variant="outline" size="sm" onClick={disconnect}>
-          Disconnect
-        </Button>
+      <div className="mb-2 flex items-center gap-2 relative" ref={dropdownRef}>
+        <button
+          className="flex items-center gap-1 px-3 py-1 rounded bg-muted hover:bg-accent text-sm font-mono border border-border"
+          onClick={() => setDropdownOpen((v) => !v)}
+        >
+          {shortAddress(account.address.toString())}
+          <ChevronDown className="h-4 w-4 ml-1" />
+        </button>
+        {dropdownOpen && (
+          <div className="absolute left-0 mt-2 w-48 bg-background border rounded shadow-lg z-50">
+            <div className="px-4 py-2 text-xs text-muted-foreground">{account.address.toString()}</div>
+            <button
+              className="w-full flex items-center gap-2 px-4 py-2 hover:bg-muted text-sm"
+              onClick={() => copyAddress(account.address.toString())}
+            >
+              <Copy className="h-4 w-4" /> Copy Address
+            </button>
+            <button
+              className="w-full flex items-center gap-2 px-4 py-2 hover:bg-muted text-sm text-red-600"
+              onClick={disconnect}
+            >
+              Disconnect
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -57,7 +107,7 @@ function WalletStatus() {
     return (
       <div className="mb-2 flex items-center gap-2">
         <div className="text-sm">
-          Keyless: <span className="font-mono">{keylessAddress}</span>
+          Keyless: <span className="font-mono">{shortAddress(keylessAddress || "")}</span>
         </div>
         <Button variant="outline" size="sm" onClick={signOut}>
           Sign Out
@@ -231,7 +281,7 @@ function ListingDetailModal({
           Category: {listing.category}
         </div>
         <div className="mb-2 text-muted-foreground text-sm">
-          Uploaded by: {shortAddress(listing.uploader)}
+          Uploaded by: {shortAddress(listing.uploader || "")}
         </div>
         <div className="mb-4 text-base">{listing.description}</div>
         <div className="mb-4 flex items-center gap-2">
@@ -253,14 +303,6 @@ function ListingDetailModal({
       </div>
     </div>
   );
-}
-
-// Utility to shorten wallet address
-function shortAddress(addr: string) {
-  if (!addr) return "";
-  if (addr.startsWith("0x") && addr.length > 6) return addr.slice(0, 4) + "..";
-  if (addr.length > 6) return addr.slice(0, 2) + "..";
-  return addr;
 }
 
 function MarketplaceContent() {
@@ -395,8 +437,12 @@ function MarketplaceContent() {
           </div>
           <div className="flex flex-col items-end gap-2">
             <WalletStatus />
-            {!connected && !keylessAccount && <AptosWalletConnect />}
-            {!connected && !keylessAccount && <GoogleSignInButton />}
+            {!(connected || keylessAccount) && (
+              <div className="flex flex-row gap-2 w-full justify-end">
+                <AptosWalletConnect />
+                <GoogleSignInButton />
+              </div>
+            )}
             <Button
               size="lg"
               className="rounded-full"
@@ -427,7 +473,7 @@ function MarketplaceContent() {
                       </div>
                       <CardDescription>
                         {listing.category} • Uploaded by{" "}
-                        {shortAddress(listing.uploader)}
+                        {shortAddress(listing.uploader || "")}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="flex-1">
@@ -471,7 +517,7 @@ function MarketplaceContent() {
                 </div>
                 <CardDescription>
                   {listing.category} • Uploaded by{" "}
-                  {shortAddress(listing.uploader)}
+                  {shortAddress(listing.uploader || "")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-1">
