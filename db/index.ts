@@ -1,20 +1,24 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import * as schema from "./schema";
+import fs from "fs"; // Import the file system module
+import path from "path"; // Import the path module
 
 // Create the connection with improved connection options
 const poolConnection = mysql.createPool({
   uri: process.env.DATABASE_URL,
-  // Adding connection configuration options
-  connectionLimit: 10, // Default is 10
-  connectTimeout: 30000, // Increase timeout to 30 seconds (from default 10s)
+  connectionLimit: 10,
+  connectTimeout: 30000,
   waitForConnections: true,
   queueLimit: 0,
-  // Disable ssl-mode warning
-  ssl: process.env.NODE_ENV === "production" ? {} : undefined,
-  // Enable connection retry logic
+  // Configure SSL to trust the CA certificate
+  ssl: {
+    // Provide the path to your CA certificate file relative to the project root
+    ca: fs.readFileSync(path.resolve(process.cwd(), "cert/ca.pem")), // <--- MODIFIED LINE
+    rejectUnauthorized: true, // Keep this as true to ensure certificate validation
+  },
   enableKeepAlive: true,
-  keepAliveInitialDelay: 10000, // 10 seconds
+  keepAliveInitialDelay: 10000,
 });
 
 // Create the db

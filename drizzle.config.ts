@@ -1,4 +1,6 @@
 import type { Config } from "drizzle-kit";
+const path = require("path");
+const fs = require("fs");
 
 export default {
   schema: "./db/migrations/0000_initial_schema.sql",

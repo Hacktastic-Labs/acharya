@@ -17,28 +17,22 @@ export function WorkspaceHeader() {
         </div>
         <nav className="hidden md:flex items-center gap-6">
           <Link
+            href="/"
+            className="text-sm font-medium hover:text-primary"
+          >
+            Home
+          </Link>
+          <Link
             href="/dashboard"
             className="text-sm font-medium hover:text-primary"
           >
-            Dashboard
+            Learn
           </Link>
           <Link
-            href="/flashcards"
+            href="/marketplace"
             className="text-sm font-medium hover:text-primary"
           >
-            Flashcards
-          </Link>
-          <Link
-            href="/summaries"
-            className="text-sm font-medium hover:text-primary"
-          >
-            Summaries
-          </Link>
-          <Link
-            href="/podcasts"
-            className="text-sm font-medium hover:text-primary"
-          >
-            Podcasts
+            Earn
           </Link>
         </nav>
         <div className="flex items-center gap-4">

@@ -6,6 +6,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ClerkProvider } from '@clerk/nextjs';
 import { AptosWalletProvider } from "@/components/aptos-wallet-provider";
+import { WorkspaceHeader } from "@/components/workspace-header";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,6 +26,7 @@ export default function RootLayout({
         >
           <ClerkProvider>
             <AptosWalletProvider>
+              <WorkspaceHeader />
               {children}
             </AptosWalletProvider>
           </ClerkProvider>
