@@ -31,11 +31,26 @@ function shuffleArray<T>(array: T[]): T[] {
 
 interface InteractiveFlashcardsProps {
   flashcardsText: string;
+  sourceType?: "file" | "youtube";
 }
 
 export function InteractiveFlashcards({
   flashcardsText,
+  sourceType = "file",
 }: InteractiveFlashcardsProps) {
+  if (sourceType === "youtube") {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 h-[300px] text-center bg-muted/30 rounded-lg border border-dashed">
+        <AlertTriangle className="h-8 w-8 text-amber-500 mb-4" />
+        <p className="font-medium text-lg">Flashcards Coming Soon!</p>
+        <p className="text-sm text-muted-foreground mt-2 max-w-sm">
+          Interactive flashcards for YouTube videos are under development. Check
+          back later!
+        </p>
+      </div>
+    );
+  }
+
   const [parsedFlashcards, setParsedFlashcards] = useState<Flashcard[]>([]);
   const [cards, setCards] = useState<Flashcard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -222,7 +237,7 @@ export function InteractiveFlashcards({
       {/* Flashcard - Using flex-grow to push navigation to bottom */}
       <div className="flex-grow mb-6">
         <div
-          className="w-full perspective cursor-pointer h-[250px]"
+          className="w-full perspective cursor-pointer h-[200px]"
           onClick={handleFlip}
         >
           <div
@@ -237,12 +252,12 @@ export function InteractiveFlashcards({
               style={{ backfaceVisibility: "hidden" }}
             >
               <Card className="w-full h-full shadow-sm hover:shadow transition-shadow border-primary/10">
-                <CardContent className="flex flex-col items-center justify-center h-full p-6 text-center">
-                  <div className="absolute top-3 right-3 inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium bg-background">
+                <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
+                  <div className="absolute top-2 right-2 inline-flex items-center rounded border px-1.5 py-0.5 text-xs font-medium bg-background">
                     Question
                   </div>
                   <div className="max-w-md">
-                    <h3 className="text-xl font-bold mb-4">
+                    <h3 className="text-lg font-semibold mb-3">
                       {currentCard.question}
                     </h3>
                     {!isFlipped && (
@@ -262,19 +277,16 @@ export function InteractiveFlashcards({
 
             {/* Back of Card (Answer) */}
             <div
-              className="absolute inset-0 w-full h-full"
-              style={{
-                backfaceVisibility: "hidden",
-                transform: "rotateY(180deg)",
-              }}
+              className="absolute inset-0 w-full h-full rotate-y-180"
+              style={{ backfaceVisibility: "hidden" }}
             >
-              <Card className="w-full h-full shadow-sm hover:shadow transition-shadow border-primary/10">
-                <CardContent className="flex flex-col items-center justify-center h-full p-6 text-center">
-                  <div className="absolute top-3 right-3 inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium bg-background">
+              <Card className="w-full h-full shadow-sm hover:shadow transition-shadow border-secondary/10">
+                <CardContent className="flex flex-col items-center justify-center h-full p-4 text-center">
+                  <div className="absolute top-2 right-2 inline-flex items-center rounded border px-1.5 py-0.5 text-xs font-medium bg-background">
                     Answer
                   </div>
-                  <div className="max-w-md overflow-y-auto max-h-[180px] scrollbar-thin">
-                    <p className="text-lg">{currentCard.answer}</p>
+                  <div className="max-w-md">
+                    <p className="text-base">{currentCard.answer}</p>
                   </div>
                 </CardContent>
               </Card>

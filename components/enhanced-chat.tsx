@@ -26,12 +26,14 @@ interface EnhancedChatProps {
   documentContext?: string;
   className?: string;
   initialMessage?: string;
+  documentId?: string;
 }
 
 export function EnhancedChat({
   documentContext = "",
   className = "",
   initialMessage = "Hello! I'm your AI learning assistant. I've analyzed your documents and I'm ready to help you learn. What would you like to know?",
+  documentId,
 }: EnhancedChatProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -75,6 +77,7 @@ export function EnhancedChat({
           message: input.trim(),
           context: documentContext,
           history: messages,
+          documentId: documentId,
         }),
       });
 
@@ -112,7 +115,7 @@ export function EnhancedChat({
         className
       )}
     >
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between p-4 border-b shrink-0">
         <div className="flex items-center gap-2">
           <Brain className="h-5 w-5 text-primary animate-pulse" />
           <h2 className="text-lg font-semibold">AI Assistant</h2>
@@ -132,7 +135,7 @@ export function EnhancedChat({
         </div>
       </div>
 
-      <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+      <ScrollArea className="flex-1 p-4 min-h-0" ref={scrollAreaRef}>
         <div className="space-y-4">
           {messages.map((message) => (
             <div
@@ -186,7 +189,7 @@ export function EnhancedChat({
         </div>
       </ScrollArea>
 
-      <form onSubmit={handleSubmit} className="p-4 border-t">
+      <form onSubmit={handleSubmit} className="p-4 border-t shrink-0">
         <div className="flex items-center gap-2">
           <Input
             placeholder="Ask me anything about your documents..."
