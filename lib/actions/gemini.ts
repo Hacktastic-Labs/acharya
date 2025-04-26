@@ -376,7 +376,12 @@ async function fetchYouTubeTranscript(url: string): Promise<string> {
     console.log("Transcript fetched successfully.");
     return fullTranscript;
   } catch (error: any) {
-    console.error(`Error fetching YouTube transcript for ${url}:`, error);
+    // Log the full error object for better debugging in production
+    console.error(
+      `Full Error fetching YouTube transcript for ${url}:`,
+      JSON.stringify(error, Object.getOwnPropertyNames(error))
+    );
+
     // Check for specific error types from the library if needed
     if (error.message?.includes("transcript disabled")) {
       throw new Error("Transcripts are disabled for this video.");
