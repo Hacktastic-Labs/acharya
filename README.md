@@ -1,3 +1,4 @@
+![Acharya Logo](assets/logo.png)
 # ✨ Acharya - Your AI Learning Companion ✨
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -19,10 +20,6 @@ Acharya is packed with features designed to make learning smarter, not harder:
 - 🔒 **Secure User Authentication:** Your learning journey is personal. Acharya uses robust authentication powered by Clerk to keep your account and data secure.
 - 🔗 **Aptos Integration:** Connect your Aptos wallet (including **keyless accounts**) to Acharya, enabling innovative features and the ability to perform **on-chain transactions** within the platform.
 - 🛍️ **Resource Marketplace:** A dedicated section for Browse, sharing, and discovering valuable learning resources contributed by the community.
-
-## 🛠️ Tech Stack: The Power Under the Hood
-
-Acharya is built on a modern, scalable, and efficient technology stack:
 
 ## 🛠️ Tech Stack: The Power Under the Hood
 
