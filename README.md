@@ -1,4 +1,4 @@
-![Acharya Logo](assets/logo.png)
+![Acharya Logo](public/logo.png)
 # ✨ Acharya - Your AI Learning Companion ✨
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
