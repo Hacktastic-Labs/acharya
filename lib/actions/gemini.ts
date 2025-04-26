@@ -7,6 +7,7 @@ import {
   HarmBlockThreshold,
 } from "@google/generative-ai";
 import { createClient } from "@deepgram/sdk";
+import { YoutubeTranscript } from "youtube-transcript";
 import fs from "fs";
 import { pipeline } from "stream/promises";
 import path from "path";
@@ -357,6 +358,38 @@ async function storeGeneratedContent(
   }
 }
 
+// --- Helper function to fetch YouTube transcript --- (Updated implementation)
+async function fetchYouTubeTranscript(url: string): Promise<string> {
+  console.log(`Fetching transcript for: ${url}`);
+  try {
+    const transcriptResponse = await YoutubeTranscript.fetchTranscript(url);
+
+    if (!transcriptResponse || transcriptResponse.length === 0) {
+      console.log("No transcript found or transcript is empty.");
+      return ""; // Return empty string if no transcript found
+    }
+
+    // Concatenate all text parts into a single string
+    const fullTranscript = transcriptResponse
+      .map((item) => item.text)
+      .join(" ");
+    console.log("Transcript fetched successfully.");
+    return fullTranscript;
+  } catch (error: any) {
+    console.error(`Error fetching YouTube transcript for ${url}:`, error);
+    // Check for specific error types from the library if needed
+    if (error.message?.includes("transcript disabled")) {
+      throw new Error("Transcripts are disabled for this video.");
+    } else if (error.message?.includes("No transcript found")) {
+      throw new Error("No transcript could be found for this video.");
+    } else {
+      throw new Error(
+        "Failed to fetch YouTube transcript due to an unexpected error."
+      );
+    }
+  }
+}
+
 // --- Server Action for File Uploads ---
 export async function uploadAndProcessDocument(
   prevState: ActionResult | null,
@@ -503,96 +536,111 @@ export async function processYouTubeVideo(
   prevState: ActionResult | null,
   formData: FormData
 ): Promise<ActionResult> {
-  console.log("Server Action: processYouTubeVideo triggered.");
-  const youtubeUrl = formData.get("youtubeUrl") as string | null;
-  const processingOption = formData.get("processingOption") as string | null;
+  // --- Extract data ---
+  const youtubeUrl = formData.get("youtubeUrl") as string;
+  const processingOption =
+    (formData.get("processingOption") as string) || "all"; // Default to 'all'
 
-  // Validation (remains the same)
-  if (
-    !youtubeUrl ||
-    typeof youtubeUrl !== "string" ||
-    youtubeUrl.trim() === ""
-  ) {
+  // --- Basic Validation ---
+  if (!youtubeUrl || !youtubeUrl.includes("youtube.com")) {
     return {
       success: false,
-      message: "YouTube URL is required.",
-      error: "URL Missing",
-      inputSource: "youtube",
-    };
-  }
-  const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+/;
-  if (!youtubeRegex.test(youtubeUrl)) {
-    return {
-      success: false,
-      message: "Please enter a valid YouTube URL.",
-      error: "Invalid URL Format",
+      message: "Invalid YouTube URL provided.",
       inputSource: "youtube",
     };
   }
 
-  console.log(`Processing URL: ${youtubeUrl}, Option: ${processingOption}`);
+  console.log(
+    `Processing YouTube video: ${youtubeUrl} with option: ${processingOption}`
+  );
 
   try {
-    // Assuming there's some function to extract YouTube content (transcript/summary)
-    // This would be implementation-specific to your needs
-    // For now, let's call our model directly with the YouTube URL as context
+    // --- Fetch Transcript ---
+    const transcript = await fetchYouTubeTranscript(youtubeUrl);
+    if (!transcript) {
+      return {
+        success: false,
+        message: "Could not retrieve transcript for the video.",
+        inputSource: "youtube",
+      };
+    }
+    console.log("Transcript fetched successfully.");
 
-    const model = getGeminiModel("gemini-1.5-flash");
-    const textPrompt = `${getPromptForOption(processingOption, "video")} 
-    YouTube Link: ${youtubeUrl}`;
+    // --- Process with Gemini ---
+    const model = getGeminiModel("gemini-1.5-pro");
+    const prompt = getPromptForOption(processingOption, "video");
 
-    // Typical safety check (you can adjust thresholds as needed)
-    const safetySettings = [
-      {
-        category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-      },
-    ];
+    const generationConfig = {
+      temperature: 0.7,
+      topK: 40,
+      topP: 0.95,
+      maxOutputTokens: 8192,
+      responseMimeType: "text/plain",
+    };
 
-    console.log("Sending YouTube URL request to Gemini...");
-    const result = await model.generateContent(textPrompt);
-    const response = result.response;
-    const generatedText = response.text();
-    console.log("Gemini response received for YouTube URL.");
+    // Apply generationConfig to the model instance if needed, or handle within generateContent if supported for multimodal
+    // Note: The SDK structure might vary. Assuming config is passed directly here.
+    const result = await model.generateContent({
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: prompt },
+            { text: `Video Transcript:\n\n${transcript}` },
+          ],
+        },
+      ],
+      generationConfig: generationConfig, // Pass config here
+    });
 
-    // For "all" option, extract individual content sections
-    let flashcardsText, summaryText, monologueText;
-    let audioFilePath = null;
+    const responseText = result.response.text();
+
+    let finalFlashcards = "";
+    let finalSummary = "";
+    let finalMonologue = "";
 
     if (processingOption === "all") {
-      const sections = extractContentSections(generatedText);
-      flashcardsText = sections.flashcards;
-      summaryText = sections.summary;
-      monologueText = sections.monologue;
-
-      // Generate audio for the monologue part
-      if (monologueText) {
-        console.log("Generating audio for monologue...");
-        audioFilePath = await generateConversationAudio(monologueText);
-      }
+      const { flashcards, summary, monologue } =
+        extractContentSections(responseText);
+      finalFlashcards = flashcards;
+      finalSummary = summary;
+      finalMonologue = monologue;
+    } else if (processingOption === "summary") {
+      finalSummary = responseText;
+    } else if (processingOption === "flashcards") {
+      finalFlashcards = responseText;
+    } else if (processingOption === "monologue") {
+      finalMonologue = responseText.replace(/^Alex:?\s*/i, "").trim();
     } else {
-      // Generate audio if the option is "conversation"
-      if (processingOption === "conversation") {
-        console.log("Generating audio for conversation...");
-        audioFilePath = await generateConversationAudio(generatedText);
-        monologueText = generatedText;
-      } else if (processingOption === "flashcards") {
-        flashcardsText = generatedText;
-      } else if (processingOption === "summary") {
-        summaryText = generatedText;
+      finalSummary = responseText;
+    }
+
+    let audioUrl: string | null = null;
+    if (finalMonologue) {
+      audioUrl = await generateConversationAudio(finalMonologue);
+      if (!audioUrl) {
+        console.warn(
+          "Failed to generate audio for the monologue, but proceeding without it."
+        );
       }
     }
 
-    // Store the content in the database
-    let sessionId = null;
+    const validProcessingOption = [
+      "flashcards",
+      "summary",
+      "monologue",
+      "all",
+    ].includes(processingOption)
+      ? (processingOption as "flashcards" | "summary" | "monologue" | "all")
+      : "all";
 
-    sessionId = await storeGeneratedContent(
-      processingOption as any,
+    const sessionId = await storeGeneratedContent(
+      validProcessingOption, // Use validated type
       {
-        flashcards: flashcardsText,
-        summary: summaryText,
-        monologue: monologueText,
-        audioPath: audioFilePath || undefined,
+        flashcards: finalFlashcards,
+        summary: finalSummary,
+        monologue: finalMonologue,
+        audioPath: audioUrl ?? undefined, // Use undefined if null
       },
       {
         sourceType: "youtube",
@@ -600,22 +648,16 @@ export async function processYouTubeVideo(
       }
     );
 
+    // --- Return Success Result ---
     return {
       success: true,
-      message: `Successfully processed YouTube video for ${
-        processingOption === "all"
-          ? "flashcards, summary & monologue"
-          : processingOption || "summary"
-      }.${audioFilePath ? " Audio generated." : ""} ${
-        sessionId ? " Content saved to your account." : ""
-      }`,
-      resultText: generatedText,
+      message: "YouTube video processed successfully.",
       inputSource: "youtube",
-      audioFilePath: audioFilePath || undefined,
-      flashcardsText: flashcardsText,
-      summaryText: summaryText,
-      monologueText: monologueText,
-      sessionId: sessionId || undefined,
+      flashcardsText: finalFlashcards, // Use extracted/assigned content
+      summaryText: finalSummary, // Use extracted/assigned content
+      monologueText: finalMonologue, // Use extracted/assigned content
+      audioFilePath: audioUrl ?? undefined,
+      sessionId: sessionId ?? undefined, // Pass session ID back to frontend
     };
   } catch (error: any) {
     console.error("Error processing YouTube URL with Gemini:", error);

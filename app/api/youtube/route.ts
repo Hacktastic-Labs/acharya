@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     // 3. Store the generated content
 
     // For now, we'll use a mock response
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
     // Generate summary
     const summaryPrompt = `Generate a summary of this YouTube video (${url}): [CONTENT]`;
