@@ -299,6 +299,7 @@ function ResultsDisplay({ resultState }: { resultState: ActionResult | null }) {
                 <div className="bg-background rounded-md border shadow-sm">
                   <InteractiveFlashcards
                     flashcardsText={resultState.flashcardsText}
+                    sourceType={resultState.inputSource}
                   />
                 </div>
               )}
@@ -416,11 +417,16 @@ function ResultsDisplay({ resultState }: { resultState: ActionResult | null }) {
                 </div>
               )}
 
-              {activeTab === "chat" && resultState.summaryText && resultState.sessionId && (
-                <div className="bg-background rounded-md border shadow-sm">
-                  <EnhancedChat documentContext={resultState.summaryText} documentId={resultState.sessionId} />
-                </div>
-              )}
+              {activeTab === "chat" &&
+                resultState.summaryText &&
+                resultState.sessionId && (
+                  <div className="bg-background rounded-md border shadow-sm">
+                    <EnhancedChat
+                      documentContext={resultState.summaryText}
+                      documentId={resultState.sessionId}
+                    />
+                  </div>
+                )}
             </div>
           </div>
         )}
