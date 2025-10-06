@@ -671,16 +671,17 @@ export default function UploadPage() {
     <div className="max-w-screen-xl mx-auto p-4">
       <div className="mt-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
             Upload & Process Content
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm md:text-base text-muted-foreground">
             Upload documents or YouTube videos to generate AI-powered
             flashcards, summaries, and audio monologues.
           </p>
         </div>
-        <ResizablePanelGroup direction="horizontal">
-          <ResizablePanel defaultSize={40} minSize={30}>
+        {/* Mobile: Stack panels vertically */}
+        <div className="md:hidden space-y-4">
+          <div className="border rounded-lg overflow-hidden">
             <UploadPanel
               fileInputRef={fileInputRef}
               youtubeUrlInputRef={youtubeUrlInputRef}
@@ -691,12 +692,32 @@ export default function UploadPage() {
               handleFileChange={handleFileChange}
               handleYoutubeUrlChange={handleYoutubeUrlChange}
             />
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={60} minSize={30}>
+          </div>
+          <div className="border rounded-lg overflow-hidden min-h-[400px]">
             <ResultsDisplay resultState={resultState} />
-          </ResizablePanel>
-        </ResizablePanelGroup>
+          </div>
+        </div>
+        {/* Desktop: Use ResizablePanel */}
+        <div className="hidden md:block">
+          <ResizablePanelGroup direction="horizontal">
+            <ResizablePanel defaultSize={40} minSize={30}>
+              <UploadPanel
+                fileInputRef={fileInputRef}
+                youtubeUrlInputRef={youtubeUrlInputRef}
+                selectedFile={selectedFile}
+                fileFormAction={fileFormAction}
+                youtubeFormAction={youtubeFormAction}
+                handleBrowseClick={handleBrowseClick}
+                handleFileChange={handleFileChange}
+                handleYoutubeUrlChange={handleYoutubeUrlChange}
+              />
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={60} minSize={30}>
+              <ResultsDisplay resultState={resultState} />
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </div>
       </div>
     </div>
   );

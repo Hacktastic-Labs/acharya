@@ -1,21 +1,34 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Headphones, Play, Plus, Search } from "lucide-react"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Headphones, Play, Plus, Search } from "lucide-react";
 
 export default function PodcastsPage() {
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Podcasts</h2>
-        <div className="flex items-center gap-2">
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+          Podcasts
+        </h2>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input type="search" placeholder="Search podcasts..." className="w-[200px] pl-8 md:w-[300px]" />
+            <Input
+              type="search"
+              placeholder="Search podcasts..."
+              className="w-full pl-8 sm:w-[200px] md:w-[300px]"
+            />
           </div>
-          <Button>
+          <Button className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
-            New Podcast
+            <span className="sm:inline">New Podcast</span>
           </Button>
         </div>
       </div>
@@ -27,7 +40,8 @@ export default function PodcastsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Listen to the evolution of computing from early mechanical devices to modern computers.
+              Listen to the evolution of computing from early mechanical devices
+              to modern computers.
             </p>
           </CardContent>
           <CardFooter className="flex justify-between">
@@ -45,7 +59,8 @@ export default function PodcastsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              A beginner-friendly explanation of machine learning concepts and applications.
+              A beginner-friendly explanation of machine learning concepts and
+              applications.
             </p>
           </CardContent>
           <CardFooter className="flex justify-between">
@@ -63,7 +78,8 @@ export default function PodcastsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Current trends and future directions in web development technologies.
+              Current trends and future directions in web development
+              technologies.
             </p>
           </CardContent>
           <CardFooter className="flex justify-between">
@@ -81,7 +97,8 @@ export default function PodcastsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Introduction to quantum bits, quantum gates, and quantum algorithms.
+              Introduction to quantum bits, quantum gates, and quantum
+              algorithms.
             </p>
           </CardContent>
           <CardFooter className="flex justify-between">
@@ -99,7 +116,8 @@ export default function PodcastsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Ethical considerations and challenges in AI development and deployment.
+              Ethical considerations and challenges in AI development and
+              deployment.
             </p>
           </CardContent>
           <CardFooter className="flex justify-between">
@@ -113,7 +131,9 @@ export default function PodcastsPage() {
         <Card className="flex flex-col items-center justify-center border-dashed p-8 text-center">
           <Headphones className="h-10 w-10 text-muted-foreground mb-4" />
           <h3 className="font-medium mb-2">Create New Podcast</h3>
-          <p className="text-sm text-muted-foreground mb-4">Generate audio from your documents or YouTube videos</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            Generate audio from your documents or YouTube videos
+          </p>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
             New Podcast
@@ -121,6 +141,5 @@ export default function PodcastsPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
-

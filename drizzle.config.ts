@@ -3,9 +3,9 @@ const path = require("path");
 const fs = require("fs");
 
 export default {
-  schema: "./db/migrations/0000_initial_schema.sql",
+  schema: "./db/schema.ts",
   out: "./db/migrations",
-  dialect: "mysql",
+  dialect: "postgresql",
   dbCredentials: {
     url: process.env.DATABASE_URL!,
   },

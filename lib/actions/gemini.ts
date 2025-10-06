@@ -75,7 +75,7 @@ async function fileToGenerativePart(file: File) {
 }
 
 // --- Shared Gemini Initialization Logic ---
-function getGeminiModel(modelName: string = "gemini-1.5-flash") {
+function getGeminiModel(modelName: string = "gemini-2.5-flash-lite") {
   const API_KEY = process.env.GEMINI_API_KEY;
   if (!API_KEY) {
     console.error("GEMINI_API_KEY environment variable not set!");
@@ -155,6 +155,17 @@ async function generateConversationAudio(
 
       if (buffer.length > 0) {
         try {
+          // Check if BLOB_READ_WRITE_TOKEN is available
+          if (!process.env.BLOB_READ_WRITE_TOKEN) {
+            console.warn(
+              "BLOB_READ_WRITE_TOKEN not configured. Audio will not be uploaded to Vercel Blob."
+            );
+            console.log(
+              "Audio generated successfully but not uploaded. Configure BLOB_READ_WRITE_TOKEN to enable uploads."
+            );
+            return null;
+          }
+
           const blob = await put(outputFileName, buffer, {
             access: "public",
             contentType: "audio/mpeg",
@@ -263,16 +274,17 @@ async function storeGeneratedContent(
       updatedAt: new Date(),
     };
 
-    await db.insert(sessions).values(sessionValues);
+    // Use RETURNING clause for PostgreSQL to get the inserted ID
+    const sessionResult = await db
+      .insert(sessions)
+      .values(sessionValues)
+      .returning({ id: sessions.id });
 
-    // Get the last inserted ID using MySQL-specific query
-    const result = await db.execute(`SELECT LAST_INSERT_ID() as id`);
-    // The result format may vary, so we use type assertion for now
-    const sessionId = parseInt((result as any)[0][0].id);
-
-    if (!sessionId) {
-      throw new Error("Failed to get session ID");
+    if (!sessionResult || sessionResult.length === 0) {
+      throw new Error("Failed to create session");
     }
+
+    const sessionId = sessionResult[0].id;
 
     // Create a document entry using the Drizzle SQL builder
     const originalContent =
@@ -288,15 +300,17 @@ async function storeGeneratedContent(
       updatedAt: new Date(),
     };
 
-    await db.insert(documents).values(documentValues);
+    // Use RETURNING clause for PostgreSQL to get the inserted ID
+    const docResult = await db
+      .insert(documents)
+      .values(documentValues)
+      .returning({ id: documents.id });
 
-    // Get the document ID
-    const docResult = await db.execute(`SELECT LAST_INSERT_ID() as id`);
-    const documentId = parseInt((docResult as any)[0][0].id);
-
-    if (!documentId) {
-      throw new Error("Failed to get document ID");
+    if (!docResult || docResult.length === 0) {
+      throw new Error("Failed to create document");
     }
+
+    const documentId = docResult[0].id;
 
     // Store each content type in the generated_content table
     if (contentType === "all" || contentType === "flashcards") {
@@ -441,7 +455,7 @@ export async function uploadAndProcessDocument(
   );
 
   try {
-    const model = getGeminiModel("gemini-1.5-flash");
+    const model = getGeminiModel("gemini-2.5-flash-lite");
     const textPrompt = getPromptForOption(processingOption, "document");
     const filePart = await fileToGenerativePart(file);
 
@@ -572,7 +586,7 @@ export async function processYouTubeVideo(
     console.log("Transcript fetched successfully.");
 
     // --- Process with Gemini ---
-    const model = getGeminiModel("gemini-1.5-pro");
+    const model = getGeminiModel("gemini-2.5-pro");
     const prompt = getPromptForOption(processingOption, "video");
 
     const generationConfig = {

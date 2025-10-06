@@ -26,9 +26,11 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <div className="flex-1 space-y-4 p-8 pt-6">
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="flex justify-center items-center mb-6">
-          <h2 className="text-3xl font-bold tracking-tight">Your Sessions</h2>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-center">
+            Your Sessions
+          </h2>
         </div>
         <SessionsList />
       </div>

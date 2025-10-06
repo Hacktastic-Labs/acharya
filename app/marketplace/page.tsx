@@ -59,7 +59,10 @@ function WalletStatus() {
   // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setDropdownOpen(false);
       }
     }
@@ -85,7 +88,9 @@ function WalletStatus() {
         </button>
         {dropdownOpen && (
           <div className="absolute left-0 mt-2 w-48 bg-background border rounded shadow-lg z-50">
-            <div className="px-4 py-2 text-xs text-muted-foreground">{account.address.toString()}</div>
+            <div className="px-4 py-2 text-xs text-muted-foreground">
+              {account.address.toString()}
+            </div>
             <button
               className="w-full flex items-center gap-2 px-4 py-2 hover:bg-muted text-sm"
               onClick={() => copyAddress(account.address.toString())}
@@ -107,7 +112,10 @@ function WalletStatus() {
     return (
       <div className="mb-2 flex items-center gap-2">
         <div className="text-sm">
-          Keyless: <span className="font-mono">{shortAddress(keylessAddress || "")}</span>
+          Keyless:{" "}
+          <span className="font-mono">
+            {shortAddress(keylessAddress || "")}
+          </span>
         </div>
         <Button variant="outline" size="sm" onClick={signOut}>
           Sign Out
@@ -131,8 +139,8 @@ function CreateListingModal({
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-background rounded-xl shadow-lg w-full max-w-md p-6 relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="bg-background rounded-xl shadow-lg w-full max-w-md p-4 md:p-6 relative max-h-[90vh] overflow-y-auto">
         <button
           className="absolute top-3 right-3 text-muted-foreground hover:text-foreground"
           onClick={onClose}
@@ -265,8 +273,8 @@ function ListingDetailModal({
 }) {
   if (!open || !listing) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-background rounded-xl shadow-lg w-full max-w-md p-6 relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="bg-background rounded-xl shadow-lg w-full max-w-md p-4 md:p-6 relative max-h-[90vh] overflow-y-auto">
         <button
           className="absolute top-3 right-3 text-muted-foreground hover:text-foreground"
           onClick={onClose}
@@ -424,28 +432,29 @@ function MarketplaceContent() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="container py-12 flex flex-col gap-8">
+      <div className="container py-6 md:py-12 px-4 flex flex-col gap-6 md:gap-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-2 flex items-center gap-2">
-              <BookOpen className="h-7 w-7 text-primary" /> Marketplace
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 flex items-center gap-2">
+              <BookOpen className="h-6 w-6 md:h-7 md:w-7 text-primary" />{" "}
+              Marketplace
             </h1>
-            <p className="text-muted-foreground max-w-xl">
+            <p className="text-sm md:text-base text-muted-foreground max-w-xl">
               Browse and purchase notes, mindmaps, and other study materials
               uploaded by students. Share your own and earn!
             </p>
           </div>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-col items-start md:items-end gap-2 w-full md:w-auto">
             <WalletStatus />
             {!(connected || keylessAccount) && (
-              <div className="flex flex-row gap-2 w-full justify-end">
+              <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto md:justify-end">
                 <AptosWalletConnect />
                 <GoogleSignInButton />
               </div>
             )}
             <Button
               size="lg"
-              className="rounded-full"
+              className="rounded-full w-full sm:w-auto"
               onClick={() => setModalOpen(true)}
               disabled={!connected && !keylessAccount}
             >
@@ -456,14 +465,14 @@ function MarketplaceContent() {
 
         {/* My Purchases Section */}
         {(account?.address || keylessAccount?.accountAddress) && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">My Purchases</h2>
+          <div className="mb-6 md:mb-8">
+            <h2 className="text-xl md:text-2xl font-bold mb-4">My Purchases</h2>
             {purchases.length === 0 ? (
-              <p className="text-muted-foreground">
+              <p className="text-sm md:text-base text-muted-foreground">
                 You haven't bought anything yet.
               </p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
                 {purchases.map((listing) => (
                   <Card key={listing.id} className="flex flex-col h-full">
                     <CardHeader>
@@ -507,7 +516,7 @@ function MarketplaceContent() {
         )}
 
         {/* Listings Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
           {listings.map((listing) => (
             <Card key={listing.id} className="flex flex-col h-full">
               <CardHeader>

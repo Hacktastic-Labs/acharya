@@ -12,21 +12,23 @@ import { FileText, Plus, Search } from "lucide-react";
 
 export default function SummariesPage() {
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Summaries</h2>
-        <div className="flex items-center gap-2">
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+          Summaries
+        </h2>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Search summaries..."
-              className="w-[200px] pl-8 md:w-[300px]"
+              className="w-full pl-8 sm:w-[200px] md:w-[300px]"
             />
           </div>
-          <Button>
+          <Button className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
-            New Summary
+            <span className="sm:inline">New Summary</span>
           </Button>
         </div>
       </div>
