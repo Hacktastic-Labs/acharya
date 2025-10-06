@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     const podcast = await podcastResult.response.text();
 
     // Store the generated content
-    const [newContent] = await db
+    const newContent = await db
       .insert(generated_content)
       .values({
         userId,
@@ -52,11 +52,11 @@ export async function POST(request: NextRequest) {
           podcast,
         },
       })
-      .$returningId();
+      .returning();
 
     return NextResponse.json({
       success: true,
-      content: newContent,
+      content: newContent[0],
     });
   } catch (error) {
     console.error("Error in YouTube route:", error);

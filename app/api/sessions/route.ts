@@ -39,77 +39,32 @@ export async function POST(request: NextRequest) {
       description,
     });
 
-    // 3. Insert into Database
-    const insertResult = await db.insert(sessions).values({
-      userId, // Ensure this userId is validated/trusted
-      title,
-      description: description || "", // Use provided description or default to empty string
-    });
+    // 3. Insert into Database and get the created session using PostgreSQL's RETURNING clause
+    const insertResult = await db
+      .insert(sessions)
+      .values({
+        userId, // Ensure this userId is validated/trusted
+        title,
+        description: description || "", // Use provided description or default to empty string
+      })
+      .returning();
 
-    // --- Log the raw insert result ---
-    // <<< ADDED DEBUG LOG >>>
-    console.log(
-      "Raw insertResult from db.insert:",
-      JSON.stringify(insertResult, null, 2)
-    );
+    // 4. Get the newly created session from the result
+    const newSession = insertResult[0];
 
-    // 4. Get the ID of the inserted row
-    // Primary focus for MySQL is insertId
-    const insertedId = (insertResult as any[])[0]?.insertId;
-
-    // --- Log the extracted ID ---
-    // <<< ADDED DEBUG LOG >>>
-    console.log("Extracted insertedId:", insertedId);
-
-    // 5. Verify ID (Check for 0, null, or undefined which indicate issues)
-    if (insertedId === undefined || insertedId === null || insertedId === 0) {
-      console.error(
-        "Insert might have failed or insertId was not found/valid in the result:",
-        insertResult
-      );
-      // Return 500 as we expect a valid ID after insert succeeds
+    // 5. Verify session was created
+    if (!newSession || !newSession.id) {
+      console.error("Insert failed or session was not returned:", insertResult);
       return NextResponse.json(
         {
           success: false,
-          message: "Failed to create session or retrieve its valid ID",
+          message: "Failed to create session",
         },
         { status: 500 }
       );
     }
 
-    console.log(
-      "Session insertion successful. Retrieved Inserted ID:",
-      insertedId
-    );
-
-    // 6. Fetch the newly created session object using the obtained ID
-    const [newSession] = await db
-      .select()
-      .from(sessions)
-      // <<< VERIFY THIS COLUMN NAME >>> Ensure 'sessions.id' matches your schema's primary key column name
-      .where(eq(sessions.id, insertedId))
-      .limit(1); // Ensure only one record is fetched
-
-    // 7. Handle Fetch Result
-    if (!newSession) {
-      // This is unlikely if the insert succeeded and ID is valid, but handle it.
-      console.error(
-        "Failed to fetch newly created session with ID:",
-        insertedId
-      );
-      // Consider if this scenario should truly be success: true. Arguably, the operation isn't fully complete.
-      // Returning 201 is okay as the resource *was* created.
-      return NextResponse.json(
-        {
-          success: true, // Or maybe false? Define desired behavior.
-          message: "Session created but could not fetch details immediately",
-          insertedId: insertedId,
-        },
-        { status: 201 }
-      ); // 201 Created status code is appropriate
-    }
-
-    console.log("Session created and fetched successfully:", newSession);
+    console.log("Session created successfully:", newSession);
 
     // 8. Return Success Response
     return NextResponse.json(
