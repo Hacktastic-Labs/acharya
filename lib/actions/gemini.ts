@@ -372,6 +372,33 @@ async function storeGeneratedContent(
   }
 }
 
+// --- Helper function to validate YouTube URLs ---
+function isValidYouTubeUrl(url: string): boolean {
+  try {
+    const urlObj = new URL(url);
+
+    // Check for youtube.com URLs
+    if (
+      urlObj.hostname === "www.youtube.com" ||
+      urlObj.hostname === "youtube.com"
+    ) {
+      // Check for /watch?v= format
+      const videoId = urlObj.searchParams.get("v");
+      return videoId !== null && videoId.length > 0;
+    }
+
+    // Check for youtu.be URLs (short format)
+    if (urlObj.hostname === "youtu.be") {
+      const videoId = urlObj.pathname.slice(1); // Remove leading slash
+      return videoId.length > 0;
+    }
+
+    return false;
+  } catch {
+    return false; // Invalid URL format
+  }
+}
+
 // --- Helper function to fetch YouTube transcript --- (Updated implementation)
 async function fetchYouTubeTranscript(url: string): Promise<string> {
   console.log(`Fetching transcript for: ${url}`);
@@ -560,11 +587,12 @@ export async function processYouTubeVideo(
   const processingOption =
     (formData.get("processingOption") as string) || "all"; // Default to 'all'
 
-  // --- Basic Validation ---
-  if (!youtubeUrl || !youtubeUrl.includes("youtube.com")) {
+  // --- Validate YouTube URL ---
+  if (!youtubeUrl || !isValidYouTubeUrl(youtubeUrl)) {
     return {
       success: false,
-      message: "Invalid YouTube URL provided.",
+      message:
+        "Invalid YouTube URL. Please provide a valid youtube.com or youtu.be URL.",
       inputSource: "youtube",
     };
   }
@@ -574,43 +602,22 @@ export async function processYouTubeVideo(
   );
 
   try {
-    // --- Fetch Transcript ---
-    const transcript = await fetchYouTubeTranscript(youtubeUrl);
-    if (!transcript) {
-      return {
-        success: false,
-        message: "Could not retrieve transcript for the video.",
-        inputSource: "youtube",
-      };
-    }
-    console.log("Transcript fetched successfully.");
-
-    // --- Process with Gemini ---
-    const model = getGeminiModel("gemini-2.5-pro");
+    // --- Process with Gemini using direct YouTube URL ---
+    const model = getGeminiModel("gemini-2.0-flash-exp");
     const prompt = getPromptForOption(processingOption, "video");
 
-    const generationConfig = {
-      temperature: 0.7,
-      topK: 40,
-      topP: 0.95,
-      maxOutputTokens: 8192,
-      responseMimeType: "text/plain",
-    };
+    console.log("Sending YouTube video directly to Gemini...");
 
-    // Apply generationConfig to the model instance if needed, or handle within generateContent if supported for multimodal
-    // Note: The SDK structure might vary. Assuming config is passed directly here.
-    const result = await model.generateContent({
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { text: prompt },
-            { text: `Video Transcript:\n\n${transcript}` },
-          ],
+    // Use the direct fileUri approach for YouTube videos
+    const result = await model.generateContent([
+      prompt,
+      {
+        fileData: {
+          fileUri: youtubeUrl,
+          mimeType: "video/*",
         },
-      ],
-      generationConfig: generationConfig, // Pass config here
-    });
+      },
+    ]);
 
     const responseText = result.response.text();
 
