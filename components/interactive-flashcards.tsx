@@ -38,19 +38,6 @@ export function InteractiveFlashcards({
   flashcardsText,
   sourceType = "file",
 }: InteractiveFlashcardsProps) {
-  if (sourceType === "youtube") {
-    return (
-      <div className="flex flex-col items-center justify-center p-8 h-[300px] text-center bg-muted/30 rounded-lg border border-dashed">
-        <AlertTriangle className="h-8 w-8 text-amber-500 mb-4" />
-        <p className="font-medium text-lg">Flashcards Coming Soon!</p>
-        <p className="text-sm text-muted-foreground mt-2 max-w-sm">
-          Interactive flashcards for YouTube videos are under development. Check
-          back later!
-        </p>
-      </div>
-    );
-  }
-
   const [parsedFlashcards, setParsedFlashcards] = useState<Flashcard[]>([]);
   const [cards, setCards] = useState<Flashcard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);

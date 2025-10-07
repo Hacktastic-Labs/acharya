@@ -603,7 +603,7 @@ export async function processYouTubeVideo(
 
   try {
     // --- Process with Gemini using direct YouTube URL ---
-    const model = getGeminiModel("gemini-2.0-flash-exp");
+    const model = getGeminiModel("gemini-2.5-flash-lite");
     const prompt = getPromptForOption(processingOption, "video");
 
     console.log("Sending YouTube video directly to Gemini...");
